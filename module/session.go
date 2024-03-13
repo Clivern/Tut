@@ -10,7 +10,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/clivern/mut/db"
+	"github.com/clivern/tut/db"
 )
 
 // SessionManager handles session operations.

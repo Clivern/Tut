@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/clivern/mut/db"
+	"github.com/clivern/tut/db"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 )

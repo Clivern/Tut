@@ -8,8 +8,8 @@ package module
 import (
 	"errors"
 
-	"github.com/clivern/mut/db"
-	"github.com/clivern/mut/service"
+	"github.com/clivern/tut/db"
+	"github.com/clivern/tut/service"
 )
 
 // Auth is a module that handles authentication.

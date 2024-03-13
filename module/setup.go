@@ -8,8 +8,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/clivern/mut/db"
-	"github.com/clivern/mut/service"
+	"github.com/clivern/tut/db"
+	"github.com/clivern/tut/service"
 	"github.com/google/uuid"
 )
 
