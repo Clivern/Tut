@@ -66,6 +66,23 @@ func Setup(Static embed.FS) http.Handler {
 		viper.GetString("app.metrics.secret"),
 	)).Get("/api/v1/public/_metrics", promhttp.Handler().ServeHTTP)
 
+	// Buckets API routes
+	r.Route("/api/v1/buckets", func(r chi.Router) {
+		r.Post("/", api.CreateBucket)
+		r.Get("/", api.ListBuckets)
+		r.Get("/{id}", api.GetBucket)
+		r.Delete("/{id}", api.DeleteBucket)
+	})
+
+	// Files API routes
+	r.Route("/api/v1/buckets/{bucketId}/files", func(r chi.Router) {
+		r.Post("/", api.UploadFile)
+		r.Get("/", api.ListFiles)
+		r.Get("/{fileId}", api.GetFile)
+		r.Get("/{fileId}/download", api.DownloadFile)
+		r.Delete("/{fileId}", api.DeleteFile)
+	})
+
 	// Serve static files from embedded web/dist
 	dist, err := fs.Sub(Static, "web/dist")
 
