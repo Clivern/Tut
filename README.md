@@ -1,7 +1,7 @@
 <p align="center">
     <img alt="Tut Logo" src="/static/logo.png?v=0.1.0" width="220" />
     <h3 align="center">Tut</h3>
-    <p align="center">A Fast, Lightweight, S3 Compatible object storage, Set up in Minutes</p>
+    <p align="center">Run Ansible, Terraform, OpenTofu with AI-powered Platform</p>
     <p align="center">
         <a href="https://github.com/Clivern/Tut/actions/workflows/api.yml">
             <img src="https://github.com/Clivern/Tut/actions/workflows/api.yml/badge.svg">
