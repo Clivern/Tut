@@ -44,4 +44,3 @@ export const clearUserStorage = () => {
     console.error('Failed to clear user from localStorage:', err)
   }
 }
-

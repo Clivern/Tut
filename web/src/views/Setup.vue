@@ -7,63 +7,63 @@
           <img src="/logo.png" alt="Tut Logo" class="h-24 w-auto">
         </div>
         <h1 class="text-2xl font-semibold text-notion-text mb-2">Tut Setup</h1>
-        <p class="text-sm text-notion-textLight">Configure your gateway and create an admin account</p>
+        <p class="text-sm text-notion-textLight">Configure the application and create an admin account</p>
       </div>
 
       <!-- Setup Form -->
       <div class="bg-white rounded-lg border border-notion-border p-8 shadow-sm">
         <form class="space-y-5" @submit.prevent="handleSetup">
-          <!-- Gateway Name Field -->
+          <!-- Application Name Field -->
           <div>
-            <label for="gateway-name" class="block text-sm font-medium text-notion-text mb-2">
-              Gateway Name
+            <label for="application-name" class="block text-sm font-medium text-notion-text mb-2">
+              Application Name
             </label>
             <input
-              id="gateway-name"
-              v-model="form.gatewayName"
+              id="application-name"
+              v-model="form.applicationName"
               type="text"
               required
               minlength="2"
               maxlength="50"
               class="input-field"
-              placeholder="My Gateway"
+              placeholder="My Application"
               :disabled="loading"
             >
-            <p class="text-xs text-notion-textLight mt-1.5">A friendly name for this gateway</p>
+            <p class="text-xs text-notion-textLight mt-1.5">A friendly name for this application</p>
           </div>
 
-          <!-- Gateway URL Field -->
+          <!-- Application URL Field -->
           <div>
-            <label for="gateway-url" class="block text-sm font-medium text-notion-text mb-2">
-              Gateway URL
+            <label for="application-url" class="block text-sm font-medium text-notion-text mb-2">
+              Application URL
             </label>
             <input
-              id="gateway-url"
-              v-model="form.gatewayURL"
+              id="application-url"
+              v-model="form.applicationURL"
               type="url"
               required
               class="input-field"
-              placeholder="https://gateway.example.com"
+              placeholder="https://application.example.com"
               :disabled="loading"
             >
-            <p class="text-xs text-notion-textLight mt-1.5">The public URL where this gateway will be accessible</p>
+            <p class="text-xs text-notion-textLight mt-1.5">The public URL where this application will be accessible</p>
           </div>
 
-          <!-- Gateway Email Field -->
+          <!-- Application Email Field -->
           <div>
-            <label for="gateway-email" class="block text-sm font-medium text-notion-text mb-2">
-              Gateway Email
+            <label for="application-email" class="block text-sm font-medium text-notion-text mb-2">
+              Application Email
             </label>
             <input
-              id="gateway-email"
-              v-model="form.gatewayEmail"
+              id="application-email"
+              v-model="form.applicationEmail"
               type="email"
               required
               class="input-field"
-              placeholder="gateway@tut.com"
+              placeholder="application@tut.com"
               :disabled="loading"
             >
-            <p class="text-xs text-notion-textLight mt-1.5">The contact email for this gateway</p>
+            <p class="text-xs text-notion-textLight mt-1.5">The contact email for this application</p>
           </div>
 
           <!-- Divider -->
@@ -178,9 +178,9 @@ import { setupAPI } from '@/api'
 const router = useRouter()
 
 const form = reactive({
-  gatewayURL: '',
-  gatewayEmail: '',
-  gatewayName: '',
+  applicationURL: '',
+  applicationEmail: '',
+  applicationName: '',
   adminEmail: '',
   adminPassword: '',
   confirmPassword: ''
@@ -219,9 +219,9 @@ const validateForm = () => {
 
   // Basic URL validation
   try {
-    new URL(form.gatewayURL)
+    new URL(form.applicationURL)
   } catch {
-    error.value = 'Please enter a valid gateway URL'
+    error.value = 'Please enter a valid application URL'
     return false
   }
 
@@ -240,14 +240,14 @@ const handleSetup = async () => {
 
   try {
     const response = await setupAPI.install({
-      gatewayURL: form.gatewayURL,
-      gatewayEmail: form.gatewayEmail,
-      gatewayName: form.gatewayName,
+      applicationURL: form.applicationURL,
+      applicationEmail: form.applicationEmail,
+      applicationName: form.applicationName,
       adminEmail: form.adminEmail,
       adminPassword: form.adminPassword
     })
 
-    success.value = 'Gateway setup completed successfully! Redirecting to login...'
+    success.value = 'Application setup completed successfully! Redirecting to login...'
 
     // Redirect to login after 2 seconds
     setTimeout(() => {
@@ -266,4 +266,3 @@ const handleSetup = async () => {
   }
 }
 </script>
-

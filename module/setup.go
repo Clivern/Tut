@@ -21,11 +21,11 @@ type Setup struct {
 
 // SetupOptions contains the configuration options for application setup.
 type SetupOptions struct {
-	AppURL        string
-	AppEmail      string
-	AppName       string
-	AdminEmail    string
-	AdminPassword string
+	ApplicationURL   string
+	ApplicationEmail string
+	ApplicationName  string
+	AdminEmail       string
+	AdminPassword    string
 }
 
 // NewSetup creates a new Setup instance with the provided repositories.
@@ -33,7 +33,7 @@ func NewSetup(optionRepository *db.OptionRepository, userRepository *db.UserRepo
 	return &Setup{OptionRepository: optionRepository, UserRepository: userRepository}
 }
 
-// IsInstalled checks whether the gateway has been installed.
+// IsInstalled checks whether the application has been installed.
 func (s *Setup) IsInstalled() bool {
 	option, err := s.OptionRepository.Get("is_installed")
 	if err != nil {
@@ -42,10 +42,10 @@ func (s *Setup) IsInstalled() bool {
 	return option != nil
 }
 
-// Install performs the initial gateway installation with the provided options.
+// Install performs the initial application installation with the provided options.
 func (s *Setup) Install(options *SetupOptions) error {
 	if s.IsInstalled() {
-		return errors.New("Gateway is already installed")
+		return errors.New("application is already installed")
 	}
 
 	hashedPassword, err := service.HashPassword(options.AdminPassword)
@@ -70,17 +70,17 @@ func (s *Setup) Install(options *SetupOptions) error {
 		return err
 	}
 
-	err = s.OptionRepository.Create("app_url", options.AppURL)
+	err = s.OptionRepository.Create("app_url", options.ApplicationURL)
 	if err != nil {
 		return err
 	}
 
-	err = s.OptionRepository.Create("app_email", options.AppEmail)
+	err = s.OptionRepository.Create("app_email", options.ApplicationEmail)
 	if err != nil {
 		return err
 	}
 
-	err = s.OptionRepository.Create("app_name", options.AppName)
+	err = s.OptionRepository.Create("app_name", options.ApplicationName)
 	if err != nil {
 		return err
 	}

@@ -49,6 +49,10 @@ func Setup(Static embed.FS) http.Handler {
 
 	r.Get("/api/v1/public/_health", api.HealthAction)
 	r.Get("/api/v1/public/_ready", api.ReadyAction)
+	r.Post("/api/v1/public/action/setup", api.SetupAction)
+	r.Get("/api/v1/public/action/setup/status", api.SetupStatusAction)
+	r.Post("/api/v1/public/action/login", api.LoginAction)
+	r.Post("/api/v1/public/action/logout", api.LogoutAction)
 	r.With(middleware.BasicAuth(
 		viper.GetString("app.metrics.username"),
 		viper.GetString("app.metrics.secret"),
