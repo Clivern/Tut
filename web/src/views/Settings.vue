@@ -64,6 +64,7 @@
         <!-- General Settings Box -->
         <div class="bg-white rounded-lg border border-notion-border p-6 shadow-sm">
           <h2 class="text-lg font-semibold text-notion-text mb-4">General</h2>
+          <div class="border-b border-notion-border mb-4"></div>
           <div class="space-y-4">
             <div>
               <label for="applicationName" class="block text-sm font-medium text-notion-text mb-2">
@@ -113,6 +114,7 @@
         <!-- SMTP Configuration Box -->
         <div class="bg-white rounded-lg border border-notion-border p-6 shadow-sm">
           <h2 class="text-lg font-semibold text-notion-text mb-4">SMTP Configuration</h2>
+          <div class="border-b border-notion-border mb-4"></div>
           <div class="space-y-4">
             <div>
               <label for="smtpServer" class="block text-sm font-medium text-notion-text mb-2">
@@ -203,6 +205,7 @@
         <!-- Maintenance Mode Box -->
         <div class="bg-white rounded-lg border border-notion-border p-6 shadow-sm">
           <h2 class="text-lg font-semibold text-notion-text mb-4">Maintenance</h2>
+          <div class="border-b border-notion-border mb-4"></div>
           <div class="flex items-start">
             <input
               id="maintenanceMode"
