@@ -114,7 +114,7 @@ const error = computed(() => authStore.error)
 const handleLogin = async () => {
   const result = await authStore.login(form.email, form.password, form.rememberMe)
   if (result.success) {
-    router.push('/dashboard')
+    router.push('/admin/dashboard')
   }
 }
 </script>

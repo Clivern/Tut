@@ -10,19 +10,19 @@
             </div>
             <div class="hidden md:ml-8 md:flex md:space-x-1">
               <router-link
-                to="/dashboard"
+                to="/admin/dashboard"
                 class="bg-notion-hover text-notion-text inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium"
               >
                 Dashboard
               </router-link>
               <router-link
-                to="/users"
+                to="/admin/users"
                 class="text-notion-textLight hover:bg-notion-hover hover:text-notion-text inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
               >
                 Users
               </router-link>
               <router-link
-                to="/settings"
+                to="/admin/settings"
                 class="text-notion-textLight hover:bg-notion-hover hover:text-notion-text inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
               >
                 Settings

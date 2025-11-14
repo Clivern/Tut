@@ -20,19 +20,19 @@ const routes = [
     meta: { requiresGuest: true }
   },
   {
-    path: '/dashboard',
+    path: '/admin/dashboard',
     name: 'Dashboard',
     component: Dashboard,
     meta: { requiresAuth: true }
   },
   {
-    path: '/users',
+    path: '/admin/users',
     name: 'Users',
     component: Users,
     meta: { requiresAuth: true }
   },
   {
-    path: '/settings',
+    path: '/admin/settings',
     name: 'Settings',
     component: Settings,
     meta: { requiresAuth: true }
@@ -66,7 +66,7 @@ router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAuth && !isAuthenticated) {
     next('/login')
   } else if (to.meta.requiresGuest && isAuthenticated) {
-    next('/dashboard')
+    next('/admin/dashboard')
   } else {
     next()
   }
