@@ -109,6 +109,57 @@ func CreateUserAction(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// GetUserAction handles get user by ID requests
+func GetUserAction(w http.ResponseWriter, r *http.Request) {
+	log.Debug().Msg("Get user endpoint called")
+
+	// Check if user is admin
+	currentUser, ok := middleware.GetUserFromContext(r.Context())
+	if !ok || currentUser.Role != db.UserRoleAdmin {
+		service.WriteJSON(w, http.StatusForbidden, map[string]interface{}{
+			"errorMessage": "Only administrators can view users",
+		})
+		return
+	}
+
+	userIDStr := chi.URLParam(r, "id")
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		service.WriteJSON(w, http.StatusBadRequest, map[string]interface{}{
+			"errorMessage": "Invalid user ID",
+		})
+		return
+	}
+
+	userRepo := db.NewUserRepository(db.GetDB())
+	user, err := userRepo.GetByID(userID)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get user")
+		service.WriteJSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"errorMessage": "Failed to get user",
+		})
+		return
+	}
+
+	if user == nil {
+		service.WriteJSON(w, http.StatusNotFound, map[string]interface{}{
+			"errorMessage": "User not found",
+		})
+		return
+	}
+
+	service.WriteJSON(w, http.StatusOK, map[string]interface{}{
+		"id":          user.ID,
+		"email":       user.Email,
+		"role":        user.Role,
+		"isActive":    user.IsActive,
+		"apiKey":      user.APIKey,
+		"lastLoginAt": user.LastLoginAt.UTC().Format(time.RFC3339),
+		"createdAt":   user.CreatedAt.UTC().Format(time.RFC3339),
+		"updatedAt":   user.UpdatedAt.UTC().Format(time.RFC3339),
+	})
+}
+
 // UpdateUserAction handles user update requests
 func UpdateUserAction(w http.ResponseWriter, r *http.Request) {
 	log.Debug().Msg("Update user endpoint called")
