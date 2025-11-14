@@ -6,7 +6,6 @@ package module
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/clivern/tut/db"
@@ -61,7 +60,7 @@ func (s *Setup) Install(options *SetupOptions) error {
 		IsActive:    true,
 		LastLoginAt: time.Now().UTC(),
 	}
-	fmt.Println("user", user)
+
 	err = s.UserRepository.Create(user)
 	if err != nil {
 		return err
