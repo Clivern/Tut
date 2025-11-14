@@ -212,3 +212,68 @@ func UpdateUserAction(w http.ResponseWriter, r *http.Request) {
 		"updatedAt":   user.UpdatedAt.UTC().Format(time.RFC3339),
 	})
 }
+
+// DeleteUserAction handles user deletion requests
+func DeleteUserAction(w http.ResponseWriter, r *http.Request) {
+	log.Debug().Msg("Delete user endpoint called")
+
+	// Check if user is admin
+	currentUser, ok := middleware.GetUserFromContext(r.Context())
+	if !ok || currentUser.Role != db.UserRoleAdmin {
+		service.WriteJSON(w, http.StatusForbidden, map[string]interface{}{
+			"errorMessage": "Only administrators can delete users",
+		})
+		return
+	}
+
+	// Get user ID from URL
+	userIDStr := chi.URLParam(r, "id")
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		service.WriteJSON(w, http.StatusBadRequest, map[string]interface{}{
+			"errorMessage": "Invalid user ID",
+		})
+		return
+	}
+
+	// Prevent self-deletion
+	if currentUser.ID == userID {
+		service.WriteJSON(w, http.StatusBadRequest, map[string]interface{}{
+			"errorMessage": "You cannot delete your own account",
+		})
+		return
+	}
+
+	userRepo := db.NewUserRepository(db.GetDB())
+
+	// Check if user exists
+	user, err := userRepo.GetByID(userID)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get user")
+		service.WriteJSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"errorMessage": "Failed to delete user",
+		})
+		return
+	}
+
+	if user == nil {
+		service.WriteJSON(w, http.StatusNotFound, map[string]interface{}{
+			"errorMessage": "User not found",
+		})
+		return
+	}
+
+	// Delete user
+	if err := userRepo.Delete(userID); err != nil {
+		log.Error().Err(err).Msg("Failed to delete user")
+		service.WriteJSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"errorMessage": "Failed to delete user",
+		})
+		return
+	}
+
+	log.Info().Int64("userID", userID).Msg("User deleted successfully")
+	service.WriteJSON(w, http.StatusOK, map[string]interface{}{
+		"successMessage": "User deleted successfully",
+	})
+}
