@@ -19,13 +19,13 @@ type SettingsRequest struct {
 	ApplicationURL   string `json:"applicationURL" validate:"required,url,min=4,max=60" label:"Application URL"`
 	ApplicationEmail string `json:"applicationEmail" validate:"required,email,min=4,max=60" label:"Application Email"`
 	ApplicationName  string `json:"applicationName" validate:"required,min=2,max=50" label:"Application Name"`
-	MaintenanceMode  bool   `json:"maintenanceMode" validate:"required,boolean" label:"Maintenance Mode"`
-	SMTPServer       string `json:"smtpServer" validate:"required,min=4,max=60" label:"SMTP Server"`
-	SMTPPort         string `json:"smtpPort" validate:"required,min=1,max=5" label:"SMTP Port"`
-	SMTPFromEmail    string `json:"smtpFromEmail" validate:"required,email,min=4,max=60" label:"SMTP From Email"`
-	SMTPUsername     string `json:"smtpUsername" validate:"required,min=4,max=60" label:"SMTP Username"`
-	SMTPPassword     string `json:"smtpPassword" validate:"required,min=8,max=60" label:"SMTP Password"`
-	SMTPUseTLS       bool   `json:"smtpUseTLS" validate:"required,boolean" label:"SMTP Use TLS"`
+	MaintenanceMode  bool   `json:"maintenanceMode" label:"Maintenance Mode"`
+	SMTPServer       string `json:"smtpServer" validate:"omitempty,min=4,max=60" label:"SMTP Server"`
+	SMTPPort         string `json:"smtpPort" validate:"omitempty,min=1,max=5" label:"SMTP Port"`
+	SMTPFromEmail    string `json:"smtpFromEmail" validate:"omitempty,email,min=4,max=60" label:"SMTP From Email"`
+	SMTPUsername     string `json:"smtpUsername" validate:"omitempty,min=4,max=60" label:"SMTP Username"`
+	SMTPPassword     string `json:"smtpPassword" validate:"omitempty,min=8,max=60" label:"SMTP Password"`
+	SMTPUseTLS       bool   `json:"smtpUseTLS" label:"SMTP Use TLS"`
 }
 
 // UpdateSettingsAction handles user settings update requests

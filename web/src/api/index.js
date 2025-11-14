@@ -61,6 +61,11 @@ export const setupAPI = {
   checkInstalled: () => api.get('public/action/setup/status'),
 }
 
+export const settingsAPI = {
+  get: () => api.get('/action/settings'),
+  update: (data) => api.put('/action/settings', data),
+}
+
 // API endpoints for users C
 export const userAPI = {
   getUsers: () => api.get('/users'),

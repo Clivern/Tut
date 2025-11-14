@@ -94,6 +94,10 @@ func getErrorMessage(e validator.FieldError) string {
 		return fmt.Sprintf("%s must be greater than %s", field, e.Param())
 	case "lt":
 		return fmt.Sprintf("%s must be less than %s", field, e.Param())
+	case "eq":
+		return fmt.Sprintf("%s must be equal to %s", field, e.Param())
+	case "ne":
+		return fmt.Sprintf("%s must not be equal to %s", field, e.Param())
 	case "alphanum":
 		return fmt.Sprintf("%s must contain only alphanumeric characters", field)
 	case "alpha":
