@@ -213,6 +213,82 @@ func UpdateUserAction(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// ListUsersAction handles user listing requests with pagination
+func ListUsersAction(w http.ResponseWriter, r *http.Request) {
+	log.Debug().Msg("List users endpoint called")
+
+	// Check if user is admin
+	currentUser, ok := middleware.GetUserFromContext(r.Context())
+	if !ok || currentUser.Role != db.UserRoleAdmin {
+		service.WriteJSON(w, http.StatusForbidden, map[string]interface{}{
+			"errorMessage": "Only administrators can list users",
+		})
+		return
+	}
+
+	limitStr := r.URL.Query().Get("limit")
+	offsetStr := r.URL.Query().Get("offset")
+
+	limit := 50
+	offset := 0
+
+	if limitStr != "" {
+		if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit > 0 && parsedLimit <= 100 {
+			limit = parsedLimit
+		}
+	}
+
+	if offsetStr != "" {
+		if parsedOffset, err := strconv.Atoi(offsetStr); err == nil && parsedOffset >= 0 {
+			offset = parsedOffset
+		}
+	}
+
+	userRepo := db.NewUserRepository(db.GetDB())
+
+	// Get users and total count
+	users, err := userRepo.List(limit, offset)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to list users")
+		service.WriteJSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"errorMessage": "Failed to list users",
+		})
+		return
+	}
+
+	total, err := userRepo.Count()
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to count users")
+		service.WriteJSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"errorMessage": "Failed to list users",
+		})
+		return
+	}
+
+	userList := make([]map[string]interface{}, 0, len(users))
+	for _, user := range users {
+		userList = append(userList, map[string]interface{}{
+			"id":          user.ID,
+			"email":       user.Email,
+			"role":        user.Role,
+			"isActive":    user.IsActive,
+			"apiKey":      user.APIKey,
+			"lastLoginAt": user.LastLoginAt.UTC().Format(time.RFC3339),
+			"createdAt":   user.CreatedAt.UTC().Format(time.RFC3339),
+			"updatedAt":   user.UpdatedAt.UTC().Format(time.RFC3339),
+		})
+	}
+
+	service.WriteJSON(w, http.StatusOK, map[string]interface{}{
+		"users": userList,
+		"pagination": map[string]interface{}{
+			"limit":  limit,
+			"offset": offset,
+			"total":  total,
+		},
+	})
+}
+
 // DeleteUserAction handles user deletion requests
 func DeleteUserAction(w http.ResponseWriter, r *http.Request) {
 	log.Debug().Msg("Delete user endpoint called")
@@ -273,7 +349,5 @@ func DeleteUserAction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Info().Int64("userID", userID).Msg("User deleted successfully")
-	service.WriteJSON(w, http.StatusOK, map[string]interface{}{
-		"successMessage": "User deleted successfully",
-	})
+	service.WriteJSON(w, http.StatusNoContent, map[string]interface{}{})
 }
