@@ -1,6 +1,6 @@
-FROM golang:1.20.4
+FROM golang:1.24.9
 
-ARG TUT_VERSION=0.3.0
+ARG TUT_VERSION=0.1.0
 
 RUN mkdir -p /app/configs
 RUN mkdir -p /app/var/logs
