@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT
 // license that can be found in the LICENSE file.
 
-// Package module provides business logic modules for the Mut application.
+// Package module provides business logic modules for the Tut application.
 package module
 
 import (
@@ -28,11 +28,9 @@ func (a *Auth) Login(email, password string) (*db.User, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	if user == nil {
 		return nil, errors.New("Email not found")
 	}
-
 	if !service.ComparePassword(user.Password, password) {
 		return nil, errors.New("Invalid password")
 	}

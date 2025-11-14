@@ -71,6 +71,8 @@ func SessionAuth() func(http.Handler) http.Handler {
 
 			user, _, err := sessionManager.ValidateSession(sessionToken)
 			if err != nil {
+				service.DeleteCookie(w, "_tut_session")
+				sessionManager.RevokeUserSessions(user.ID)
 				log.Info().Err(err).Str("path", r.URL.Path).Msg("Session validation failed")
 				service.WriteJSON(w, http.StatusUnauthorized, map[string]interface{}{
 					"errorMessage": "Invalid or expired session",
@@ -81,7 +83,6 @@ func SessionAuth() func(http.Handler) http.Handler {
 			log.Info().Str("path", r.URL.Path).Msg("Session validation successful")
 			// Store user and session in context
 			ctx := context.WithValue(r.Context(), ContextKeyUser, user)
-			// Call the next handler with the updated context
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

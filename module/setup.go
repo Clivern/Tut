@@ -13,17 +13,17 @@ import (
 	"github.com/google/uuid"
 )
 
-// Setup handles the initial installation and configuration of the gateway.
+// Setup handles the initial installation and configuration of the application.
 type Setup struct {
 	OptionRepository *db.OptionRepository
 	UserRepository   *db.UserRepository
 }
 
-// SetupOptions contains the configuration options for gateway setup.
+// SetupOptions contains the configuration options for application setup.
 type SetupOptions struct {
-	GatewayURL    string
-	GatewayEmail  string
-	GatewayName   string
+	AppURL        string
+	AppEmail      string
+	AppName       string
 	AdminEmail    string
 	AdminPassword string
 }
@@ -44,7 +44,6 @@ func (s *Setup) IsInstalled() bool {
 
 // Install performs the initial gateway installation with the provided options.
 func (s *Setup) Install(options *SetupOptions) error {
-	// Check if the database is already installed
 	if s.IsInstalled() {
 		return errors.New("Gateway is already installed")
 	}
@@ -53,7 +52,6 @@ func (s *Setup) Install(options *SetupOptions) error {
 	if err != nil {
 		return err
 	}
-	// Create a new user
 	user := &db.User{
 		Email:       options.AdminEmail,
 		Password:    hashedPassword,
@@ -67,26 +65,62 @@ func (s *Setup) Install(options *SetupOptions) error {
 		return err
 	}
 
-	// Set the installed option
 	err = s.OptionRepository.Create("is_installed", "1")
 	if err != nil {
 		return err
 	}
 
-	// Set the gateway URL option
-	err = s.OptionRepository.Create("gateway_url", options.GatewayURL)
+	err = s.OptionRepository.Create("app_url", options.AppURL)
 	if err != nil {
 		return err
 	}
 
-	// Set the gateway email option
-	err = s.OptionRepository.Create("gateway_email", options.GatewayEmail)
+	err = s.OptionRepository.Create("app_email", options.AppEmail)
 	if err != nil {
 		return err
 	}
 
-	// Set the gateway name option
-	err = s.OptionRepository.Create("gateway_name", options.GatewayName)
+	err = s.OptionRepository.Create("app_name", options.AppName)
+	if err != nil {
+		return err
+	}
+
+	err = s.OptionRepository.Create("maintenance_mode", "0")
+	if err != nil {
+		return err
+	}
+
+	err = s.OptionRepository.Create("app_description", "")
+	if err != nil {
+		return err
+	}
+
+	err = s.OptionRepository.Create("smtp_server", "")
+	if err != nil {
+		return err
+	}
+
+	err = s.OptionRepository.Create("smtp_port", "587")
+	if err != nil {
+		return err
+	}
+
+	err = s.OptionRepository.Create("smtp_from_email", "")
+	if err != nil {
+		return err
+	}
+
+	err = s.OptionRepository.Create("smtp_username", "")
+	if err != nil {
+		return err
+	}
+
+	err = s.OptionRepository.Create("smtp_password", "")
+	if err != nil {
+		return err
+	}
+
+	err = s.OptionRepository.Create("smtp_use_tls", "0")
 	if err != nil {
 		return err
 	}

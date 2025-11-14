@@ -12,13 +12,13 @@ import (
 
 // detectDriver attempts to determine the database driver type
 func detectDriver(db *sql.DB) string {
-	// Try SQLite
+	// Check SQLite
 	_, err := db.Exec("SELECT sqlite_version()")
 	if err == nil {
 		return "sqlite"
 	}
 
-	// Try PostgreSQL
+	// Check PostgreSQL
 	_, err = db.Exec("SELECT version()")
 	if err == nil {
 		var version string
@@ -28,7 +28,7 @@ func detectDriver(db *sql.DB) string {
 		}
 	}
 
-	// Unknown driver
+	// Unknown database driver
 	return "unknown"
 }
 
@@ -64,30 +64,6 @@ func GetAll() []Migration {
 			Description: "Create activities table",
 			Up:          createActivitiesTable,
 			Down:        dropActivitiesTable,
-		},
-		{
-			Version:     "20250101000008",
-			Description: "Create buckets table",
-			Up:          createBucketsTable,
-			Down:        dropBucketsTable,
-		},
-		{
-			Version:     "20250101000009",
-			Description: "Create files table",
-			Up:          createFilesTable,
-			Down:        dropFilesTable,
-		},
-		{
-			Version:     "20250101000010",
-			Description: "Create buckets_meta table",
-			Up:          createBucketsMetaTable,
-			Down:        dropBucketsMetaTable,
-		},
-		{
-			Version:     "20250101000011",
-			Description: "Create files_meta table",
-			Up:          createFilesMetaTable,
-			Down:        dropFilesMetaTable,
 		},
 	}
 }
@@ -165,8 +141,7 @@ func createUsersTable(db *sql.DB) error {
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		);
 		CREATE INDEX idx_email ON users(email);
-		CREATE INDEX idx_api_key ON users(api_key);
-		CREATE INDEX idx_role ON users(role)`
+		CREATE INDEX idx_api_key ON users(api_key)`
 	default:
 		return fmt.Errorf("unsupported database driver: %s", driver)
 	}
@@ -178,68 +153,6 @@ func createUsersTable(db *sql.DB) error {
 // dropUsersTable drops the users table
 func dropUsersTable(db *sql.DB) error {
 	_, err := db.Exec("DROP TABLE IF EXISTS users")
-	return err
-}
-
-// createActivitiesTable creates the activities table
-func createActivitiesTable(db *sql.DB) error {
-	driver := detectDriver(db)
-	var query string
-
-	switch driver {
-	case "sqlite":
-		query = `
-		CREATE TABLE activities (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			user_id INTEGER,
-			user_email VARCHAR(255),
-			action VARCHAR(100) NOT NULL,
-			entity_type VARCHAR(50) NOT NULL,
-			entity_id INTEGER,
-			entity_name VARCHAR(255),
-			details TEXT,
-			status VARCHAR(20),
-			error_message TEXT,
-			ip_address VARCHAR(45),
-			user_agent VARCHAR(500),
-			request_id VARCHAR(100),
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
-		)`
-	case "postgres":
-		query = `
-		CREATE TABLE activities (
-			id BIGSERIAL PRIMARY KEY,
-			user_id INT,
-			user_email VARCHAR(255),
-			action VARCHAR(100) NOT NULL,
-			entity_type VARCHAR(50) NOT NULL,
-			entity_id INT,
-			entity_name VARCHAR(255),
-			details TEXT,
-			status VARCHAR(20),
-			error_message TEXT,
-			ip_address VARCHAR(45),
-			user_agent VARCHAR(500),
-			request_id VARCHAR(100),
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
-		);
-		CREATE INDEX idx_user_id ON activities(user_id);
-		CREATE INDEX idx_action ON activities(action);
-		CREATE INDEX idx_entity ON activities(entity_type, entity_id);
-		CREATE INDEX idx_created_at ON activities(created_at)`
-	default:
-		return fmt.Errorf("unsupported database driver: %s", driver)
-	}
-
-	_, err := db.Exec(query)
-	return err
-}
-
-// dropActivitiesTable drops the activities table
-func dropActivitiesTable(db *sql.DB) error {
-	_, err := db.Exec("DROP TABLE IF EXISTS activities")
 	return err
 }
 
@@ -338,40 +251,46 @@ func dropSessionsTable(db *sql.DB) error {
 	return err
 }
 
-// createBucketsTable creates the buckets table
-func createBucketsTable(db *sql.DB) error {
+// createActivitiesTable creates the activities table
+func createActivitiesTable(db *sql.DB) error {
 	driver := detectDriver(db)
 	var query string
 
 	switch driver {
 	case "sqlite":
 		query = `
-		CREATE TABLE buckets (
+		CREATE TABLE activities (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			name VARCHAR(255) NOT NULL,
-			user_id INTEGER NOT NULL,
-			description TEXT,
-			is_public BOOLEAN DEFAULT 0,
+			user_id INTEGER,
+			user_email VARCHAR(255),
+			action VARCHAR(100) NOT NULL,
+			entity_type VARCHAR(50) NOT NULL,
+			entity_id INTEGER,
+			details TEXT,
+			ip_address VARCHAR(45),
+			user_agent VARCHAR(500),
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-			UNIQUE(user_id, name)
+			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 		)`
 	case "postgres":
 		query = `
-		CREATE TABLE buckets (
-			id SERIAL PRIMARY KEY,
-			name VARCHAR(255) NOT NULL,
-			user_id INT NOT NULL,
-			description TEXT,
-			is_public BOOLEAN DEFAULT false,
+		CREATE TABLE activities (
+			id BIGSERIAL PRIMARY KEY,
+			user_id INT,
+			user_email VARCHAR(255),
+			action VARCHAR(100) NOT NULL,
+			entity_type VARCHAR(50) NOT NULL,
+			entity_id INT,
+			details TEXT,
+			ip_address VARCHAR(45),
+			user_agent VARCHAR(500),
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-			UNIQUE (user_id, name)
+			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 		);
-		CREATE INDEX idx_bucket_user_id ON buckets(user_id);
-		CREATE INDEX idx_bucket_name ON buckets(name)`
+		CREATE INDEX idx_user_id ON activities(user_id);
+		CREATE INDEX idx_action ON activities(action);
+		CREATE INDEX idx_entity ON activities(entity_type, entity_id);
+		CREATE INDEX idx_created_at ON activities(created_at)`
 	default:
 		return fmt.Errorf("unsupported database driver: %s", driver)
 	}
@@ -380,157 +299,8 @@ func createBucketsTable(db *sql.DB) error {
 	return err
 }
 
-// dropBucketsTable drops the buckets table
-func dropBucketsTable(db *sql.DB) error {
-	_, err := db.Exec("DROP TABLE IF EXISTS buckets")
-	return err
-}
-
-// createFilesTable creates the files table
-func createFilesTable(db *sql.DB) error {
-	driver := detectDriver(db)
-	var query string
-
-	switch driver {
-	case "sqlite":
-		query = `
-		CREATE TABLE files (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			bucket_id INTEGER NOT NULL,
-			name VARCHAR(255) NOT NULL,
-			path VARCHAR(500) NOT NULL,
-			content_type VARCHAR(255),
-			size INTEGER DEFAULT 0,
-			etag VARCHAR(255),
-			user_id INTEGER NOT NULL,
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (bucket_id) REFERENCES buckets(id) ON DELETE CASCADE,
-			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-			UNIQUE(bucket_id, name)
-		)`
-	case "postgres":
-		query = `
-		CREATE TABLE files (
-			id SERIAL PRIMARY KEY,
-			bucket_id INT NOT NULL,
-			name VARCHAR(255) NOT NULL,
-			path VARCHAR(500) NOT NULL,
-			content_type VARCHAR(255),
-			size BIGINT DEFAULT 0,
-			etag VARCHAR(255),
-			user_id INT NOT NULL,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (bucket_id) REFERENCES buckets(id) ON DELETE CASCADE,
-			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-			UNIQUE (bucket_id, name)
-		);
-		CREATE INDEX idx_file_bucket_id ON files(bucket_id);
-		CREATE INDEX idx_file_user_id ON files(user_id);
-		CREATE INDEX idx_file_name ON files(name)`
-	default:
-		return fmt.Errorf("unsupported database driver: %s", driver)
-	}
-
-	_, err := db.Exec(query)
-	return err
-}
-
-// dropFilesTable drops the files table
-func dropFilesTable(db *sql.DB) error {
-	_, err := db.Exec("DROP TABLE IF EXISTS files")
-	return err
-}
-
-// createBucketsMetaTable creates the buckets_meta table
-func createBucketsMetaTable(db *sql.DB) error {
-	driver := detectDriver(db)
-	var query string
-
-	switch driver {
-	case "sqlite":
-		query = `
-		CREATE TABLE buckets_meta (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			key VARCHAR(255) NOT NULL,
-			value TEXT,
-			bucket_id INTEGER NOT NULL,
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (bucket_id) REFERENCES buckets(id) ON DELETE CASCADE,
-			UNIQUE(bucket_id, key)
-		)`
-	case "postgres":
-		query = `
-		CREATE TABLE buckets_meta (
-			id SERIAL PRIMARY KEY,
-			key VARCHAR(255) NOT NULL,
-			value TEXT,
-			bucket_id INT NOT NULL,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (bucket_id) REFERENCES buckets(id) ON DELETE CASCADE,
-			UNIQUE (bucket_id, key)
-		);
-		CREATE INDEX idx_bucket_id ON buckets_meta(bucket_id);
-		CREATE INDEX idx_key ON buckets_meta(key)`
-	default:
-		return fmt.Errorf("unsupported database driver: %s", driver)
-	}
-
-	_, err := db.Exec(query)
-	return err
-}
-
-// dropBucketsMetaTable drops the buckets_meta table
-func dropBucketsMetaTable(db *sql.DB) error {
-	_, err := db.Exec("DROP TABLE IF EXISTS buckets_meta")
-	return err
-}
-
-// createFilesMetaTable creates the files_meta table
-func createFilesMetaTable(db *sql.DB) error {
-	driver := detectDriver(db)
-	var query string
-
-	switch driver {
-	case "sqlite":
-		query = `
-		CREATE TABLE files_meta (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			key VARCHAR(255) NOT NULL,
-			value TEXT,
-			file_id INTEGER NOT NULL,
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE,
-			UNIQUE(file_id, key)
-		)`
-	case "postgres":
-		query = `
-		CREATE TABLE files_meta (
-			id SERIAL PRIMARY KEY,
-			key VARCHAR(255) NOT NULL,
-			value TEXT,
-			file_id INT NOT NULL,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE,
-			UNIQUE (file_id, key)
-		);
-		CREATE INDEX idx_file_id ON files_meta(file_id);
-		CREATE INDEX idx_key ON files_meta(key)`
-	default:
-		return fmt.Errorf("unsupported database driver: %s", driver)
-	}
-
-	_, err := db.Exec(query)
-	return err
-}
-
-// dropFilesMetaTable drops the files_meta table
-func dropFilesMetaTable(db *sql.DB) error {
-	_, err := db.Exec("DROP TABLE IF EXISTS files_meta")
+// dropActivitiesTable drops the activities table
+func dropActivitiesTable(db *sql.DB) error {
+	_, err := db.Exec("DROP TABLE IF EXISTS activities")
 	return err
 }

@@ -116,6 +116,7 @@ coverage:
 .PHONY: run
 run:
 	@echo ">> ============= Run API Server ============= <<"
+	$(go) run tut.go migrate up -c config.dist.yml
 	$(go) run tut.go server -c config.dist.yml
 
 

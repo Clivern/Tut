@@ -21,7 +21,6 @@ type Activity struct {
 	Details    *string
 	IPAddress  *string
 	UserAgent  *string
-	RequestID  *string
 	CreatedAt  time.Time
 }
 
@@ -36,25 +35,11 @@ func NewActivityRepository(db *sql.DB) *ActivityRepository {
 }
 
 // Create inserts a new activity log entry into the database.
-//
-// Example:
-//
-//	activity := &Activity{
-//		UserID:     &userID,
-//		UserEmail:  &email,
-//		Action:     "user.login",
-//		EntityType: "user",
-//		EntityID:   &userID,
-//		Details:    &details,
-//		IPAddress:  &ip,
-//	}
-//	err := repo.Create(activity)
 func (r *ActivityRepository) Create(activity *Activity) error {
 	result, err := r.db.Exec(
 		`INSERT INTO activities (
-			user_id, user_email, action, entity_type, entity_id,
-			details, ip_address, user_agent, request_id
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			user_id, user_email, action, entity_type, entity_id, details, ip_address, user_agent
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		activity.UserID,
 		activity.UserEmail,
 		activity.Action,
@@ -63,7 +48,6 @@ func (r *ActivityRepository) Create(activity *Activity) error {
 		activity.Details,
 		activity.IPAddress,
 		activity.UserAgent,
-		activity.RequestID,
 	)
 	if err != nil {
 		return err
@@ -78,8 +62,7 @@ func (r *ActivityRepository) GetByID(id int64) (*Activity, error) {
 	activity := &Activity{}
 	err := r.db.QueryRow(
 		`SELECT
-			id, user_id, user_email, action, entity_type, entity_id,
-			details, ip_address, user_agent, request_id, created_at
+			id, user_id, user_email, action, entity_type, entity_id, details, ip_address, user_agent, created_at
 		FROM activities
 		WHERE id = ?`,
 		id,
@@ -93,7 +76,6 @@ func (r *ActivityRepository) GetByID(id int64) (*Activity, error) {
 		&activity.Details,
 		&activity.IPAddress,
 		&activity.UserAgent,
-		&activity.RequestID,
 		&activity.CreatedAt,
 	)
 
@@ -111,8 +93,7 @@ func (r *ActivityRepository) GetByID(id int64) (*Activity, error) {
 func (r *ActivityRepository) List(limit, offset int) ([]*Activity, error) {
 	rows, err := r.db.Query(
 		`SELECT
-			id, user_id, user_email, action, entity_type, entity_id,
-			details, ip_address, user_agent, request_id, created_at
+			id, user_id, user_email, action, entity_type, entity_id, details, ip_address, user_agent, created_at
 		FROM activities
 		ORDER BY created_at DESC
 		LIMIT ? OFFSET ?`,
@@ -131,8 +112,7 @@ func (r *ActivityRepository) List(limit, offset int) ([]*Activity, error) {
 func (r *ActivityRepository) ListByUser(userID int64, limit, offset int) ([]*Activity, error) {
 	rows, err := r.db.Query(
 		`SELECT
-			id, user_id, user_email, action, entity_type, entity_id,
-			details, ip_address, user_agent, request_id, created_at
+			id, user_id, user_email, action, entity_type, entity_id, details, ip_address, user_agent, created_at
 		FROM activities
 		WHERE user_id = ?
 		ORDER BY created_at DESC
@@ -153,8 +133,7 @@ func (r *ActivityRepository) ListByUser(userID int64, limit, offset int) ([]*Act
 func (r *ActivityRepository) ListByAction(action string, limit, offset int) ([]*Activity, error) {
 	rows, err := r.db.Query(
 		`SELECT
-			id, user_id, user_email, action, entity_type, entity_id,
-			details, ip_address, user_agent, request_id, created_at
+			id, user_id, user_email, action, entity_type, entity_id, details, ip_address, user_agent, created_at
 		FROM activities
 		WHERE action = ?
 		ORDER BY created_at DESC
@@ -175,8 +154,7 @@ func (r *ActivityRepository) ListByAction(action string, limit, offset int) ([]*
 func (r *ActivityRepository) ListByEntity(entityType string, entityID int64, limit, offset int) ([]*Activity, error) {
 	rows, err := r.db.Query(
 		`SELECT
-			id, user_id, user_email, action, entity_type, entity_id,
-			details, ip_address, user_agent, request_id, created_at
+			id, user_id, user_email, action, entity_type, entity_id, details, ip_address, user_agent, created_at
 		FROM activities
 		WHERE entity_type = ? AND entity_id = ?
 		ORDER BY created_at DESC
@@ -198,8 +176,7 @@ func (r *ActivityRepository) ListByEntity(entityType string, entityID int64, lim
 func (r *ActivityRepository) ListByDateRange(startDate, endDate time.Time, limit, offset int) ([]*Activity, error) {
 	rows, err := r.db.Query(
 		`SELECT
-			id, user_id, user_email, action, entity_type, entity_id,
-			details, ip_address, user_agent, request_id, created_at
+			id, user_id, user_email, action, entity_type, entity_id, details, ip_address, user_agent, created_at
 		FROM activities
 		WHERE created_at >= ? AND created_at <= ?
 		ORDER BY created_at DESC
@@ -254,7 +231,6 @@ func (r *ActivityRepository) scanActivities(rows *sql.Rows) ([]*Activity, error)
 			&activity.Details,
 			&activity.IPAddress,
 			&activity.UserAgent,
-			&activity.RequestID,
 			&activity.CreatedAt,
 		); err != nil {
 			return nil, err

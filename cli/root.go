@@ -15,7 +15,7 @@ var config string
 
 var rootCmd = &cobra.Command{
 	Use: "tut",
-	Short: `A Fast, Lightweight, S3 Compatible object storage, Set up in Minutes.
+	Short: `🐀 A Fast, Lightweight, S3 Compatible object storage, Set up in Minutes.
 
 If you have any suggestions, bug reports, or annoyances please report
 them to our issue tracker at <https://github.com/clivern/tut/issues>`,

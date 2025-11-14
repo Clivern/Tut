@@ -8,6 +8,7 @@ import (
 	"github.com/clivern/tut/core"
 	"github.com/clivern/tut/db"
 	"github.com/clivern/tut/migration"
+
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

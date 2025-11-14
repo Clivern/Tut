@@ -32,60 +32,29 @@ import (
 func Setup(Static embed.FS) http.Handler {
 	r := chi.NewRouter()
 
-	// Recover middleware
 	r.Use(chimiddleware.Recoverer)
-
-	// Request timeout middleware
 	if viper.GetInt("app.timeout") > 0 {
 		timeout := time.Duration(viper.GetInt("app.timeout")) * time.Second
 		r.Use(chimiddleware.Timeout(timeout))
 	}
-
-	// Prometheus middleware for HTTP metrics
 	r.Use(middleware.PrometheusMiddleware)
-
-	// Custom logger middleware
 	r.Use(middleware.Logger)
-
-	// Request size limit middleware
 	r.Use(middleware.RequestSizeLimit(int64(10 * 1024 * 1024)))
-
-	// Session authentication middleware
 	r.Use(middleware.SessionAuth())
 
 	// Routes
 	r.Get("/favicon.ico", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	})
+
 	r.Get("/api/v1/public/_health", api.HealthAction)
 	r.Get("/api/v1/public/_ready", api.ReadyAction)
-
-	// Metrics endpoint with basic auth
 	r.With(middleware.BasicAuth(
 		viper.GetString("app.metrics.username"),
 		viper.GetString("app.metrics.secret"),
 	)).Get("/api/v1/public/_metrics", promhttp.Handler().ServeHTTP)
 
-	// Buckets API routes
-	r.Route("/api/v1/buckets", func(r chi.Router) {
-		r.Post("/", api.CreateBucket)
-		r.Get("/", api.ListBuckets)
-		r.Get("/{id}", api.GetBucket)
-		r.Delete("/{id}", api.DeleteBucket)
-	})
-
-	// Files API routes
-	r.Route("/api/v1/buckets/{bucketId}/files", func(r chi.Router) {
-		r.Post("/", api.UploadFile)
-		r.Get("/", api.ListFiles)
-		r.Get("/{fileId}", api.GetFile)
-		r.Get("/{fileId}/download", api.DownloadFile)
-		r.Delete("/{fileId}", api.DeleteFile)
-	})
-
-	// Serve static files from embedded web/dist
 	dist, err := fs.Sub(Static, "web/dist")
-
 	if err != nil {
 		panic(fmt.Sprintf(
 			"Error while accessing dist files: %s",
@@ -97,9 +66,7 @@ func Setup(Static embed.FS) http.Handler {
 	r.Handle("/assets/*", http.StripPrefix("/", http.FileServer(http.FS(dist))))
 
 	// SPA fallback: serve index.html for all other routes
-	// This allows Vue Router to handle client-side routing
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		// Read index.html from embedded filesystem
 		indexFile, err := dist.Open("index.html")
 		if err != nil {
 			http.Error(w, "Not Found", http.StatusNotFound)
@@ -107,14 +74,12 @@ func Setup(Static embed.FS) http.Handler {
 		}
 		defer indexFile.Close()
 
-		// Get file info to set proper headers
 		stat, err := indexFile.Stat()
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 
-		// Serve index.html
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		http.ServeContent(w, r, "index.html", stat.ModTime(), indexFile.(io.ReadSeeker))
 	})
@@ -142,28 +107,23 @@ func InitDatabase() error {
 
 // Run starts the HTTP server with graceful shutdown support
 func Run(handler http.Handler) error {
-	// Initialize database connection
 	if err := InitDatabase(); err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
 
-	// Ensure database connection is closed on exit
 	defer func() {
 		if err := db.CloseDB(); err != nil {
 			log.Error().Err(err).Msg("Error closing database connection")
 		}
 	}()
 
-	// Create HTTP server
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", strconv.Itoa(viper.GetInt("app.port"))),
 		Handler: handler,
 	}
 
-	// Channel to listen for errors from the server
 	serverErrors := make(chan error, 1)
 
-	// Start the server in a goroutine
 	go func() {
 		log.Info().
 			Int("port", viper.GetInt("app.port")).
@@ -180,16 +140,15 @@ func Run(handler http.Handler) error {
 			err = srv.ListenAndServe()
 		}
 
+		// Ignore ErrServerClosed as it's expected during graceful shutdown
 		if err != nil && err != http.ErrServerClosed {
 			serverErrors <- err
 		}
 	}()
 
-	// Channel to listen for interrupt signals
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
-	// Block until we receive a signal or an error
 	select {
 	case err := <-serverErrors:
 		return fmt.Errorf("server error: %w", err)
@@ -198,7 +157,6 @@ func Run(handler http.Handler) error {
 			Str("signal", sig.String()).
 			Msg("Received shutdown signal")
 
-		// Create a deadline for graceful shutdown
 		shutdownTimeout := 30 * time.Second
 
 		ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
@@ -208,7 +166,7 @@ func Run(handler http.Handler) error {
 			Dur("timeout", shutdownTimeout).
 			Msg("Gracefully shutting down server")
 
-		// Attempt graceful shutdown
+		// Shutdown with timeout to allow in-flight requests to complete
 		if err := srv.Shutdown(ctx); err != nil {
 			return fmt.Errorf("server forced to shutdown: %w", err)
 		}
