@@ -26,7 +26,7 @@
               minlength="2"
               maxlength="50"
               class="input-field"
-              placeholder="My Application"
+              placeholder="Tut"
               :disabled="loading"
             >
             <p class="text-xs text-notion-textLight mt-1.5">A friendly name for this application</p>
@@ -43,7 +43,7 @@
               type="url"
               required
               class="input-field"
-              placeholder="https://application.example.com"
+              placeholder="http://tut.com"
               :disabled="loading"
             >
             <p class="text-xs text-notion-textLight mt-1.5">The public URL where this application will be accessible</p>
@@ -60,7 +60,7 @@
               type="email"
               required
               class="input-field"
-              placeholder="application@tut.com"
+              placeholder="admin@tut.com"
               :disabled="loading"
             >
             <p class="text-xs text-notion-textLight mt-1.5">The contact email for this application</p>
@@ -87,7 +87,7 @@
               type="email"
               required
               class="input-field"
-              placeholder="admin@tut.com"
+              placeholder="hello@example.com"
               :disabled="loading"
             >
             <p class="text-xs text-notion-textLight mt-1.5">The email address for the admin account</p>
