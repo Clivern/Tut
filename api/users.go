@@ -5,15 +5,16 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/clivern/tut/db"
 	"github.com/clivern/tut/middleware"
+	"github.com/clivern/tut/module"
 	"github.com/clivern/tut/service"
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
 
@@ -43,43 +44,21 @@ func CreateUserAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userRepo := db.NewUserRepository(db.GetDB())
+	userModule := module.NewUser(db.NewUserRepository(db.GetDB()))
+	user, err := userModule.CreateUser(&module.CreateUserOptions{
+		Email:    req.Email,
+		Password: req.Password,
+		Role:     req.Role,
+		IsActive: req.IsActive,
+	})
 
-	// Check if user with email already exists
-	existingUser, err := userRepo.GetByEmail(req.Email)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to check existing user")
-		service.WriteJSON(w, http.StatusInternalServerError, map[string]interface{}{
-			"errorMessage": "Failed to create user",
-		})
-		return
-	}
-	if existingUser != nil {
-		service.WriteJSON(w, http.StatusConflict, map[string]interface{}{
-			"errorMessage": "User with this email already exists",
-		})
-		return
-	}
-
-	hashedPassword, err := service.HashPassword(req.Password)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to hash password")
-		service.WriteJSON(w, http.StatusInternalServerError, map[string]interface{}{
-			"errorMessage": "Failed to create user",
-		})
-		return
-	}
-
-	user := &db.User{
-		Email:       req.Email,
-		Password:    hashedPassword,
-		Role:        req.Role,
-		APIKey:      uuid.New().String(),
-		IsActive:    req.IsActive,
-		LastLoginAt: time.Time{},
-	}
-
-	if err := userRepo.Create(user); err != nil {
+		if errors.Is(err, module.ErrUserEmailAlreadyExists) {
+			service.WriteJSON(w, http.StatusConflict, map[string]interface{}{
+				"errorMessage": "User with this email already exists",
+			})
+			return
+		}
 		log.Error().Err(err).Msg("Failed to create user")
 		service.WriteJSON(w, http.StatusInternalServerError, map[string]interface{}{
 			"errorMessage": "Failed to create user",
@@ -113,19 +92,18 @@ func GetUserAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userRepo := db.NewUserRepository(db.GetDB())
-	user, err := userRepo.GetByID(userID)
+	userModule := module.NewUser(db.NewUserRepository(db.GetDB()))
+	user, err := userModule.GetUser(userID)
 	if err != nil {
+		if errors.Is(err, module.ErrUserNotFound) {
+			service.WriteJSON(w, http.StatusNotFound, map[string]interface{}{
+				"errorMessage": "User not found",
+			})
+			return
+		}
 		log.Error().Err(err).Msg("Failed to get user")
 		service.WriteJSON(w, http.StatusInternalServerError, map[string]interface{}{
 			"errorMessage": "Failed to get user",
-		})
-		return
-	}
-
-	if user == nil {
-		service.WriteJSON(w, http.StatusNotFound, map[string]interface{}{
-			"errorMessage": "User not found",
 		})
 		return
 	}
@@ -162,61 +140,28 @@ func UpdateUserAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userRepo := db.NewUserRepository(db.GetDB())
+	userModule := module.NewUser(db.NewUserRepository(db.GetDB()))
+	user, err := userModule.UpdateUser(&module.UpdateUserOptions{
+		UserID:   userID,
+		Email:    req.Email,
+		Password: req.Password,
+		Role:     req.Role,
+		IsActive: req.IsActive,
+	})
 
-	// Get existing user
-	user, err := userRepo.GetByID(userID)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to get user")
-		service.WriteJSON(w, http.StatusInternalServerError, map[string]interface{}{
-			"errorMessage": "Failed to update user",
-		})
-		return
-	}
-
-	if user == nil {
-		service.WriteJSON(w, http.StatusNotFound, map[string]interface{}{
-			"errorMessage": "User not found",
-		})
-		return
-	}
-
-	// Check if email is being changed and if it's already taken
-	if req.Email != user.Email {
-		existingUser, err := userRepo.GetByEmail(req.Email)
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to check existing user")
-			service.WriteJSON(w, http.StatusInternalServerError, map[string]interface{}{
-				"errorMessage": "Failed to update user",
+		if errors.Is(err, module.ErrUserNotFound) {
+			service.WriteJSON(w, http.StatusNotFound, map[string]interface{}{
+				"errorMessage": "User not found",
 			})
 			return
 		}
-		if existingUser != nil && existingUser.ID != userID {
+		if errors.Is(err, module.ErrUserEmailAlreadyExists) {
 			service.WriteJSON(w, http.StatusConflict, map[string]interface{}{
 				"errorMessage": "User with this email already exists",
 			})
 			return
 		}
-	}
-
-	user.Email = req.Email
-	user.Role = req.Role
-	user.IsActive = req.IsActive
-
-	// Update password only if provided
-	if req.Password != "" {
-		hashedPassword, err := service.HashPassword(req.Password)
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to hash password")
-			service.WriteJSON(w, http.StatusInternalServerError, map[string]interface{}{
-				"errorMessage": "Failed to update user",
-			})
-			return
-		}
-		user.Password = hashedPassword
-	}
-
-	if err := userRepo.Update(user); err != nil {
 		log.Error().Err(err).Msg("Failed to update user")
 		service.WriteJSON(w, http.StatusInternalServerError, map[string]interface{}{
 			"errorMessage": "Failed to update user",
@@ -259,10 +204,12 @@ func ListUsersAction(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	userRepo := db.NewUserRepository(db.GetDB())
+	userModule := module.NewUser(db.NewUserRepository(db.GetDB()))
+	result, err := userModule.ListUsers(&module.ListUsersOptions{
+		Limit:  limit,
+		Offset: offset,
+	})
 
-	// Get users and total count
-	users, err := userRepo.List(limit, offset)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to list users")
 		service.WriteJSON(w, http.StatusInternalServerError, map[string]interface{}{
@@ -271,17 +218,8 @@ func ListUsersAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	total, err := userRepo.Count()
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to count users")
-		service.WriteJSON(w, http.StatusInternalServerError, map[string]interface{}{
-			"errorMessage": "Failed to list users",
-		})
-		return
-	}
-
-	userList := make([]map[string]interface{}, 0, len(users))
-	for _, user := range users {
+	userList := make([]map[string]interface{}, 0, len(result.Users))
+	for _, user := range result.Users {
 		userList = append(userList, map[string]interface{}{
 			"id":          user.ID,
 			"email":       user.Email,
@@ -299,7 +237,7 @@ func ListUsersAction(w http.ResponseWriter, r *http.Request) {
 		"pagination": map[string]interface{}{
 			"limit":  limit,
 			"offset": offset,
-			"total":  total,
+			"total":  result.Total,
 		},
 	})
 }
@@ -328,27 +266,15 @@ func DeleteUserAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userRepo := db.NewUserRepository(db.GetDB())
-
-	// Check if user exists
-	user, err := userRepo.GetByID(userID)
+	userModule := module.NewUser(db.NewUserRepository(db.GetDB()))
+	err = userModule.DeleteUser(userID)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to get user")
-		service.WriteJSON(w, http.StatusInternalServerError, map[string]interface{}{
-			"errorMessage": "Failed to delete user",
-		})
-		return
-	}
-
-	if user == nil {
-		service.WriteJSON(w, http.StatusNotFound, map[string]interface{}{
-			"errorMessage": "User not found",
-		})
-		return
-	}
-
-	// Delete user
-	if err := userRepo.Delete(userID); err != nil {
+		if errors.Is(err, module.ErrUserNotFound) {
+			service.WriteJSON(w, http.StatusNotFound, map[string]interface{}{
+				"errorMessage": "User not found",
+			})
+			return
+		}
 		log.Error().Err(err).Msg("Failed to delete user")
 		service.WriteJSON(w, http.StatusInternalServerError, map[string]interface{}{
 			"errorMessage": "Failed to delete user",
