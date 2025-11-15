@@ -37,15 +37,6 @@ type UpdateUserRequest struct {
 func CreateUserAction(w http.ResponseWriter, r *http.Request) {
 	log.Debug().Msg("Create user endpoint called")
 
-	// Check if user is admin
-	currentUser, ok := middleware.GetUserFromContext(r.Context())
-	if !ok || currentUser.Role != db.UserRoleAdmin {
-		service.WriteJSON(w, http.StatusForbidden, map[string]interface{}{
-			"errorMessage": "Only administrators can create users",
-		})
-		return
-	}
-
 	var req CreateUserRequest
 	if err := service.DecodeAndValidate(r, &req); err != nil {
 		service.WriteValidationError(w, err)
@@ -113,15 +104,6 @@ func CreateUserAction(w http.ResponseWriter, r *http.Request) {
 func GetUserAction(w http.ResponseWriter, r *http.Request) {
 	log.Debug().Msg("Get user endpoint called")
 
-	// Check if user is admin
-	currentUser, ok := middleware.GetUserFromContext(r.Context())
-	if !ok || currentUser.Role != db.UserRoleAdmin {
-		service.WriteJSON(w, http.StatusForbidden, map[string]interface{}{
-			"errorMessage": "Only administrators can view users",
-		})
-		return
-	}
-
 	userIDStr := chi.URLParam(r, "id")
 	userID, err := strconv.ParseInt(userIDStr, 10, 64)
 	if err != nil {
@@ -163,15 +145,6 @@ func GetUserAction(w http.ResponseWriter, r *http.Request) {
 // UpdateUserAction handles user update requests
 func UpdateUserAction(w http.ResponseWriter, r *http.Request) {
 	log.Debug().Msg("Update user endpoint called")
-
-	// Check if user is admin
-	currentUser, ok := middleware.GetUserFromContext(r.Context())
-	if !ok || currentUser.Role != db.UserRoleAdmin {
-		service.WriteJSON(w, http.StatusForbidden, map[string]interface{}{
-			"errorMessage": "Only administrators can update users",
-		})
-		return
-	}
 
 	// Get user ID from URL
 	userIDStr := chi.URLParam(r, "id")
@@ -268,15 +241,6 @@ func UpdateUserAction(w http.ResponseWriter, r *http.Request) {
 func ListUsersAction(w http.ResponseWriter, r *http.Request) {
 	log.Debug().Msg("List users endpoint called")
 
-	// Check if user is admin
-	currentUser, ok := middleware.GetUserFromContext(r.Context())
-	if !ok || currentUser.Role != db.UserRoleAdmin {
-		service.WriteJSON(w, http.StatusForbidden, map[string]interface{}{
-			"errorMessage": "Only administrators can list users",
-		})
-		return
-	}
-
 	limitStr := r.URL.Query().Get("limit")
 	offsetStr := r.URL.Query().Get("offset")
 
@@ -344,14 +308,7 @@ func ListUsersAction(w http.ResponseWriter, r *http.Request) {
 func DeleteUserAction(w http.ResponseWriter, r *http.Request) {
 	log.Debug().Msg("Delete user endpoint called")
 
-	// Check if user is admin
-	currentUser, ok := middleware.GetUserFromContext(r.Context())
-	if !ok || currentUser.Role != db.UserRoleAdmin {
-		service.WriteJSON(w, http.StatusForbidden, map[string]interface{}{
-			"errorMessage": "Only administrators can delete users",
-		})
-		return
-	}
+	currentUser, _ := middleware.GetUserFromContext(r.Context())
 
 	// Get user ID from URL
 	userIDStr := chi.URLParam(r, "id")

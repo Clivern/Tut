@@ -59,11 +59,15 @@ func Setup(Static embed.FS) http.Handler {
 	r.Group(func(r chi.Router) {
 		r.Get("/api/v1/action/profile", api.GetProfileAction)
 		r.Put("/api/v1/action/profile", api.UpdateProfileAction)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.RequireRole(db.UserRoleUser))
 		r.Put("/api/v1/action/settings", api.UpdateSettingsAction)
 		r.Get("/api/v1/action/settings", api.GetSettingsAction)
 	})
 	// Users routes
 	r.Group(func(r chi.Router) {
+		r.Use(middleware.RequireRole(db.UserRoleAdmin))
 		r.Post("/api/v1/users", api.CreateUserAction)
 		r.Get("/api/v1/users", api.ListUsersAction)
 		r.Get("/api/v1/users/{id}", api.GetUserAction)

@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/clivern/tut/db"
-	"github.com/clivern/tut/middleware"
 	"github.com/clivern/tut/module"
 	"github.com/clivern/tut/service"
 
@@ -32,15 +31,6 @@ type SettingsRequest struct {
 // UpdateSettingsAction handles user settings update requests
 func UpdateSettingsAction(w http.ResponseWriter, r *http.Request) {
 	log.Debug().Msg("Update settings endpoint called")
-
-	// Check if user is admin
-	currentUser, ok := middleware.GetUserFromContext(r.Context())
-	if !ok || currentUser.Role != db.UserRoleAdmin {
-		service.WriteJSON(w, http.StatusForbidden, map[string]interface{}{
-			"errorMessage": "Only administrators can update settings",
-		})
-		return
-	}
 
 	var req SettingsRequest
 	if err := service.DecodeAndValidate(r, &req); err != nil {
