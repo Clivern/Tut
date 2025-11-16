@@ -234,7 +234,7 @@ func ListUsersAction(w http.ResponseWriter, r *http.Request) {
 
 	service.WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"users": userList,
-		"pagination": map[string]interface{}{
+		"_meta": map[string]interface{}{
 			"limit":  limit,
 			"offset": offset,
 			"total":  result.Total,
