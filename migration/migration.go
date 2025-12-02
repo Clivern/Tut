@@ -256,7 +256,7 @@ func (m *Manager) Status() error {
 	})
 
 	log.Info().Msg("Migration Status:")
-	log.Info().Msg("==================")
+	log.Info().Msg("=================")
 
 	for _, migration := range m.migrations {
 		applied, err := m.isApplied(migration.Version)

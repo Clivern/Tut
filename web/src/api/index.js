@@ -75,3 +75,25 @@ export const settingsAPI = {
   getSettings: () => api.get('/action/settings'),
   updateSettings: (data) => api.put('/action/settings', data),
 }
+
+// API endpoints for buckets
+export const bucketAPI = {
+  getBuckets: (params = {}) => api.get('/buckets', { params }),
+  getBucket: (name) => api.get(`/buckets/${encodeURIComponent(name)}`),
+  createBucket: (data) => api.post('/buckets', data),
+  deleteBucket: (name) => api.delete(`/buckets/${encodeURIComponent(name)}`),
+  listBucketItems: (bucketName, params = {}) => api.get(`/buckets/${encodeURIComponent(bucketName)}/items`, { params }),
+  uploadFile: (bucketName, path, formData) => api.post(`/buckets/${encodeURIComponent(bucketName)}/items`, formData, {
+    params: { path: encodeURIComponent(path) },
+  }),
+  downloadFile: (bucketName, path) => api.get(`/buckets/${encodeURIComponent(bucketName)}/items`, {
+    params: { path: encodeURIComponent(path) },
+    responseType: 'blob',
+  }),
+  createFolder: (bucketName, path) => api.post(`/buckets/${encodeURIComponent(bucketName)}/folders`, null, {
+    params: { path: encodeURIComponent(path) },
+  }),
+  deleteItem: (bucketName, path, type = 'file') => api.delete(`/buckets/${encodeURIComponent(bucketName)}/items`, {
+    params: { path: encodeURIComponent(path), type },
+  }),
+}

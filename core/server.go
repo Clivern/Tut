@@ -61,7 +61,7 @@ func Setup(Static embed.FS) http.Handler {
 		r.Put("/api/v1/action/profile", api.UpdateProfileAction)
 	})
 	r.Group(func(r chi.Router) {
-		r.Use(middleware.RequireRole(db.UserRoleUser))
+		r.Use(middleware.RequireRole(db.UserRoleAdmin))
 		r.Put("/api/v1/action/settings", api.UpdateSettingsAction)
 		r.Get("/api/v1/action/settings", api.GetSettingsAction)
 	})
@@ -73,6 +73,15 @@ func Setup(Static embed.FS) http.Handler {
 		r.Get("/api/v1/users/{id}", api.GetUserAction)
 		r.Put("/api/v1/users/{id}", api.UpdateUserAction)
 		r.Delete("/api/v1/users/{id}", api.DeleteUserAction)
+	})
+	// Buckets routes
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.RequireRole(db.UserRoleAdmin))
+		r.Post("/api/v1/buckets", api.CreateBucketAction)
+		r.Get("/api/v1/buckets", api.ListBucketsAction)
+		r.Get("/api/v1/buckets/{id}", api.GetBucketAction)
+		r.Put("/api/v1/buckets/{id}", api.UpdateBucketAction)
+		r.Delete("/api/v1/buckets/{id}", api.DeleteBucketAction)
 	})
 	// Metrics routes
 	r.With(middleware.BasicAuth(

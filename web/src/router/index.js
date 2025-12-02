@@ -5,6 +5,8 @@ import Dashboard from '@/views/Dashboard.vue'
 import Setup from '@/views/Setup.vue'
 import Settings from '@/views/Settings.vue'
 import Users from '@/views/Users.vue'
+import Buckets from '@/views/Buckets.vue'
+import BucketFiles from '@/views/BucketFiles.vue'
 
 const routes = [
   {
@@ -35,6 +37,18 @@ const routes = [
     path: '/admin/settings',
     name: 'Settings',
     component: Settings,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/buckets',
+    name: 'Buckets',
+    component: Buckets,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/buckets/:bucketName',
+    name: 'BucketFiles',
+    component: BucketFiles,
     meta: { requiresAuth: true }
   },
   {

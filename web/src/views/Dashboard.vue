@@ -16,6 +16,12 @@
                 Dashboard
               </router-link>
               <router-link
+                to="/admin/buckets"
+                class="text-notion-textLight hover:bg-notion-hover hover:text-notion-text inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+              >
+                Buckets
+              </router-link>
+              <router-link
                 to="/admin/users"
                 class="text-notion-textLight hover:bg-notion-hover hover:text-notion-text inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
               >

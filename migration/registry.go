@@ -65,6 +65,30 @@ func GetAll() []Migration {
 			Up:          createActivitiesTable,
 			Down:        dropActivitiesTable,
 		},
+		{
+			Version:     "20250101000008",
+			Description: "Create buckets table",
+			Up:          createBucketsTable,
+			Down:        dropBucketsTable,
+		},
+		{
+			Version:     "20250101000009",
+			Description: "Create buckets_meta table",
+			Up:          createBucketsMetaTable,
+			Down:        dropBucketsMetaTable,
+		},
+		{
+			Version:     "20250101000010",
+			Description: "Create nodes table",
+			Up:          createNodesTable,
+			Down:        dropNodesTable,
+		},
+		{
+			Version:     "20250101000011",
+			Description: "Create nodes_meta table",
+			Up:          createNodesMetaTable,
+			Down:        dropNodesMetaTable,
+		},
 	}
 }
 
@@ -302,5 +326,190 @@ func createActivitiesTable(db *sql.DB) error {
 // dropActivitiesTable drops the activities table
 func dropActivitiesTable(db *sql.DB) error {
 	_, err := db.Exec("DROP TABLE IF EXISTS activities")
+	return err
+}
+
+// createBucketsTable creates the buckets table
+func createBucketsTable(db *sql.DB) error {
+	driver := detectDriver(db)
+	var query string
+
+	switch driver {
+	case "sqlite":
+		query = `
+		CREATE TABLE buckets (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name VARCHAR(255) NOT NULL UNIQUE,
+			region VARCHAR(100),
+			tags TEXT DEFAULT '{}',
+			versioning BOOLEAN DEFAULT 0,
+			public_access BOOLEAN DEFAULT 0,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`
+	case "postgres":
+		query = `
+		CREATE TABLE buckets (
+			id SERIAL PRIMARY KEY,
+			name VARCHAR(255) NOT NULL UNIQUE,
+			region VARCHAR(100),
+			tags TEXT DEFAULT '{}',
+			versioning BOOLEAN DEFAULT false,
+			public_access BOOLEAN DEFAULT false,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		);
+		CREATE INDEX idx_name ON buckets(name)`
+	default:
+		return fmt.Errorf("unsupported database driver: %s", driver)
+	}
+
+	_, err := db.Exec(query)
+	return err
+}
+
+// dropBucketsTable drops the buckets table
+func dropBucketsTable(db *sql.DB) error {
+	_, err := db.Exec("DROP TABLE IF EXISTS buckets")
+	return err
+}
+
+// createBucketsMetaTable creates the buckets_meta table
+func createBucketsMetaTable(db *sql.DB) error {
+	driver := detectDriver(db)
+	var query string
+
+	switch driver {
+	case "sqlite":
+		query = `
+		CREATE TABLE buckets_meta (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			key VARCHAR(255) NOT NULL,
+			value TEXT,
+			bucket_id INTEGER NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (bucket_id) REFERENCES buckets(id) ON DELETE CASCADE,
+			UNIQUE(bucket_id, key)
+		)`
+	case "postgres":
+		query = `
+		CREATE TABLE buckets_meta (
+			id SERIAL PRIMARY KEY,
+			key VARCHAR(255) NOT NULL,
+			value TEXT,
+			bucket_id INT NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (bucket_id) REFERENCES buckets(id) ON DELETE CASCADE,
+			UNIQUE (bucket_id, key)
+		);
+		CREATE INDEX idx_bucket_id ON buckets_meta(bucket_id);
+		CREATE INDEX idx_key ON buckets_meta(key)`
+	default:
+		return fmt.Errorf("unsupported database driver: %s", driver)
+	}
+
+	_, err := db.Exec(query)
+	return err
+}
+
+// dropBucketsMetaTable drops the buckets_meta table
+func dropBucketsMetaTable(db *sql.DB) error {
+	_, err := db.Exec("DROP TABLE IF EXISTS buckets_meta")
+	return err
+}
+
+// createNodesTable creates the nodes table
+func createNodesTable(db *sql.DB) error {
+	driver := detectDriver(db)
+	var query string
+
+	switch driver {
+	case "sqlite":
+		query = `
+		CREATE TABLE nodes (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name VARCHAR(255) NOT NULL UNIQUE,
+			host VARCHAR(255) NOT NULL,
+			port INTEGER NOT NULL,
+			protocol VARCHAR(10) DEFAULT 'http',
+			is_active BOOLEAN DEFAULT 1,
+			last_seen_at DATETIME,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`
+	case "postgres":
+		query = `
+		CREATE TABLE nodes (
+			id SERIAL PRIMARY KEY,
+			name VARCHAR(255) NOT NULL UNIQUE,
+			host VARCHAR(255) NOT NULL,
+			port INTEGER NOT NULL,
+			protocol VARCHAR(10) DEFAULT 'http',
+			is_active BOOLEAN DEFAULT true,
+			last_seen_at TIMESTAMP,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		);
+		CREATE INDEX idx_name ON nodes(name);
+		CREATE INDEX idx_is_active ON nodes(is_active)`
+	default:
+		return fmt.Errorf("unsupported database driver: %s", driver)
+	}
+
+	_, err := db.Exec(query)
+	return err
+}
+
+// dropNodesTable drops the nodes table
+func dropNodesTable(db *sql.DB) error {
+	_, err := db.Exec("DROP TABLE IF EXISTS nodes")
+	return err
+}
+
+// createNodesMetaTable creates the nodes_meta table
+func createNodesMetaTable(db *sql.DB) error {
+	driver := detectDriver(db)
+	var query string
+
+	switch driver {
+	case "sqlite":
+		query = `
+		CREATE TABLE nodes_meta (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			key VARCHAR(255) NOT NULL,
+			value TEXT,
+			node_id INTEGER NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (node_id) REFERENCES nodes(id) ON DELETE CASCADE,
+			UNIQUE(node_id, key)
+		)`
+	case "postgres":
+		query = `
+		CREATE TABLE nodes_meta (
+			id SERIAL PRIMARY KEY,
+			key VARCHAR(255) NOT NULL,
+			value TEXT,
+			node_id INT NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (node_id) REFERENCES nodes(id) ON DELETE CASCADE,
+			UNIQUE (node_id, key)
+		);
+		CREATE INDEX idx_node_id ON nodes_meta(node_id);
+		CREATE INDEX idx_key ON nodes_meta(key)`
+	default:
+		return fmt.Errorf("unsupported database driver: %s", driver)
+	}
+
+	_, err := db.Exec(query)
+	return err
+}
+
+// dropNodesMetaTable drops the nodes_meta table
+func dropNodesMetaTable(db *sql.DB) error {
+	_, err := db.Exec("DROP TABLE IF EXISTS nodes_meta")
 	return err
 }

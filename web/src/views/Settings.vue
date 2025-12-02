@@ -16,6 +16,12 @@
                 Dashboard
               </router-link>
               <router-link
+                to="/admin/buckets"
+                class="text-notion-textLight hover:bg-notion-hover hover:text-notion-text inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+              >
+                Buckets
+              </router-link>
+              <router-link
                 to="/admin/users"
                 class="text-notion-textLight hover:bg-notion-hover hover:text-notion-text inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
               >
@@ -279,7 +285,7 @@ const loadSettings = async () => {
   errorMessage.value = null
 
   try {
-    const response = await settingsAPI.get()
+    const response = await settingsAPI.getSettings()
     const settings = response.data?.settings
 
     if (settings) {
@@ -336,7 +342,7 @@ const handleSave = async () => {
     if (form.smtpUsername){ payload.smtpUsername = form.smtpUsername }
     if (form.smtpPassword){ payload.smtpPassword = form.smtpPassword }
 
-    const response = await settingsAPI.update(payload)
+    const response = await settingsAPI.updateSettings(payload)
 
     if (response.data?.successMessage) {
       successMessage.value = response.data.successMessage
