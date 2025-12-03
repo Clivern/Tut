@@ -53,7 +53,24 @@ func (r *BucketRepository) Create(bucket *Bucket) error {
 	}
 
 	bucket.ID, err = result.LastInsertId()
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Refetch the bucket to populate CreatedAt and UpdatedAt timestamps
+	createdBucket, err := r.GetByID(bucket.ID)
+	if err != nil {
+		return err
+	}
+	if createdBucket == nil {
+		return sql.ErrNoRows
+	}
+
+	// Copy the timestamps from the refetched bucket
+	bucket.CreatedAt = createdBucket.CreatedAt
+	bucket.UpdatedAt = createdBucket.UpdatedAt
+
+	return nil
 }
 
 // GetByID retrieves a bucket by ID.

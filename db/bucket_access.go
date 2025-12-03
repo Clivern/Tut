@@ -50,7 +50,24 @@ func (r *BucketAccessRepository) Create(access *BucketAccess) error {
 	}
 
 	access.ID, err = result.LastInsertId()
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Refetch the access record to populate CreatedAt and UpdatedAt timestamps
+	createdAccess, err := r.GetByID(access.ID)
+	if err != nil {
+		return err
+	}
+	if createdAccess == nil {
+		return sql.ErrNoRows
+	}
+
+	// Copy the timestamps from the refetched access record
+	access.CreatedAt = createdAccess.CreatedAt
+	access.UpdatedAt = createdAccess.UpdatedAt
+
+	return nil
 }
 
 // Get retrieves a bucket access record by bucket ID and user ID.
