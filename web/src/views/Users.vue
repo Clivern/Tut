@@ -1,56 +1,9 @@
 <template>
   <div class="min-h-screen bg-notion-bg">
-    <!-- Navigation -->
-    <nav class="bg-white border-b border-notion-border">
-      <div class="max-w-7xl mx-auto px-6 lg:px-8">
-        <div class="flex justify-between h-14">
-          <div class="flex items-center">
-            <div class="flex-shrink-0 flex items-center">
-              <img src="/logo.png" alt="Mut Logo" class="h-8 w-auto">
-            </div>
-            <div class="hidden md:ml-8 md:flex md:space-x-1">
-              <router-link
-                to="/admin/dashboard"
-                class="text-notion-textLight hover:bg-notion-hover hover:text-notion-text inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
-              >
-                Dashboard
-              </router-link>
-              <router-link
-                to="/admin/buckets"
-                class="text-notion-textLight hover:bg-notion-hover hover:text-notion-text inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
-              >
-                Buckets
-              </router-link>
-              <router-link
-                to="/admin/users"
-                class="bg-notion-hover text-notion-text inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium"
-              >
-                Users
-              </router-link>
-              <router-link
-                to="/admin/settings"
-                class="text-notion-textLight hover:bg-notion-hover hover:text-notion-text inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
-              >
-                Settings
-              </router-link>
-            </div>
-          </div>
-          <div class="flex items-center">
-            <div class="flex items-center space-x-3">
-              <button
-                @click="handleLogout"
-                class="btn-secondary text-sm"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </nav>
+    <NavBar />
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto py-8 px-6 lg:px-8">
+    <main class="w-full py-8 px-6 lg:px-8">
       <!-- Page Header -->
       <div class="mb-8 flex justify-between items-center">
         <div>
@@ -446,6 +399,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { userAPI } from '@/api'
+import NavBar from '@/components/NavBar.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -484,10 +438,6 @@ const editForm = reactive({
   isActive: true
 })
 
-const handleLogout = () => {
-  authStore.logout()
-  router.push('/login')
-}
 
 const formatDate = (dateString) => {
   if (!dateString) return 'Never'

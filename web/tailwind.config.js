@@ -26,6 +26,13 @@ export default {
           border: '#E3E2E0',
           hover: '#F1F0ED',
         },
+        theme: {
+          bg: '#F7F6F3',
+          text: '#37352F',
+          textLight: '#6B6966',
+          border: '#E3E2E0',
+          hover: '#F1F0ED',
+        },
       },
     },
   },

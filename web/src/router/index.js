@@ -7,6 +7,9 @@ import Settings from '@/views/Settings.vue'
 import Users from '@/views/Users.vue'
 import Buckets from '@/views/Buckets.vue'
 import BucketFiles from '@/views/BucketFiles.vue'
+import Profile from '@/views/Profile.vue'
+import NotFound from '@/views/NotFound.vue'
+import ServerError from '@/views/ServerError.vue'
 
 const routes = [
   {
@@ -52,8 +55,29 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/admin/profile',
+    name: 'Profile',
+    component: Profile,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/500',
+    name: 'ServerError',
+    component: ServerError
+  },
+  {
+    path: '/404',
+    name: 'NotFound',
+    component: NotFound
+  },
+  {
+    path: '/',
+    redirect: '/admin/dashboard'
+  },
+  {
     path: '/:pathMatch(.*)*',
-    redirect: '/login'
+    name: 'NotFound',
+    component: NotFound
   }
 ]
 
@@ -77,6 +101,12 @@ router.beforeEach(async (to, from, next) => {
   // Check if setup is completed (you can implement this check via API)
   // For now, we'll allow access to setup page if not authenticated
 
+  // Allow access to error pages without authentication
+  if (to.name === 'NotFound' || to.name === 'ServerError') {
+    next()
+    return
+  }
+
   if (to.meta.requiresAuth && !isAuthenticated) {
     next('/login')
   } else if (to.meta.requiresGuest && isAuthenticated) {
@@ -84,6 +114,12 @@ router.beforeEach(async (to, from, next) => {
   } else {
     next()
   }
+})
+
+// Global error handler
+router.onError((error) => {
+  console.error('Router error:', error)
+  router.push('/500')
 })
 
 export default router

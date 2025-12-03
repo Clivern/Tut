@@ -19,7 +19,7 @@ import (
 // CreateBucketRequest represents the create bucket request payload
 type CreateBucketRequest struct {
 	Name         string            `json:"name" validate:"required,bucket_name" label:"Bucket Name"`
-	Region       string            `json:"region" validate:"omitempty,max=100" label:"Region"`
+	Region       string            `json:"region" validate:"omitempty,region" label:"Region"`
 	Tags         map[string]string `json:"tags" label:"Tags"`
 	Versioning   bool              `json:"versioning" label:"Versioning"`
 	PublicAccess bool              `json:"publicAccess" label:"Public Access"`
@@ -28,7 +28,7 @@ type CreateBucketRequest struct {
 // UpdateBucketRequest represents the update bucket request payload
 type UpdateBucketRequest struct {
 	Name         string            `json:"name" validate:"omitempty,bucket_name" label:"Bucket Name"`
-	Region       string            `json:"region" validate:"omitempty,max=100" label:"Region"`
+	Region       string            `json:"region" validate:"omitempty,region" label:"Region"`
 	Tags         map[string]string `json:"tags" label:"Tags"`
 	Versioning   *bool             `json:"versioning" label:"Versioning"`
 	PublicAccess *bool             `json:"publicAccess" label:"Public Access"`

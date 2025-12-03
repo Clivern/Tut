@@ -35,6 +35,7 @@ func init() {
 	// Register custom validators
 	validate.RegisterValidation("strong_password", validateStrongPassword)
 	validate.RegisterValidation("bucket_name", validateBucketName)
+	validate.RegisterValidation("region", validateRegion)
 }
 
 // GetValidator returns the global validator instance
@@ -119,6 +120,8 @@ func getErrorMessage(e validator.FieldError) string {
 		return fmt.Sprintf("%s must contain at least 8 characters, one uppercase, one lowercase, one digit, and one special character", field)
 	case "bucket_name":
 		return fmt.Sprintf("%s must be 3-63 characters, lowercase, and can only contain letters, numbers, dots, and hyphens", field)
+	case "region":
+		return fmt.Sprintf("%s must be one of the supported regions", field)
 	default:
 		return fmt.Sprintf("%s is invalid", field)
 	}
@@ -127,7 +130,7 @@ func getErrorMessage(e validator.FieldError) string {
 // DecodeJSON decodes JSON from request body
 func DecodeJSON(r *http.Request, v interface{}) error {
 	if err := json.NewDecoder(r.Body).Decode(v); err != nil {
-		return fmt.Errorf("Invalid JSON format: %w", err)
+		return fmt.Errorf("invalid JSON format: %w", err)
 	}
 	return nil
 }

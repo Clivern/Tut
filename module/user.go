@@ -194,3 +194,46 @@ func (u *User) DeleteUser(userID int64) error {
 	// Delete user
 	return u.UserRepository.Delete(userID)
 }
+
+// RegenerateAPIKey generates a new API key for a user.
+func (u *User) RegenerateAPIKey(userID int64) (string, error) {
+	// Check if user exists
+	user, err := u.UserRepository.GetByID(userID)
+	if err != nil {
+		return "", err
+	}
+	if user == nil {
+		return "", ErrUserNotFound
+	}
+
+	// Generate new API key
+	newAPIKey := uuid.New().String()
+
+	// Update API key
+	if err := u.UserRepository.UpdateAPIKey(userID, newAPIKey); err != nil {
+		return "", err
+	}
+
+	return newAPIKey, nil
+}
+
+// UpdatePassword updates a user's password.
+func (u *User) UpdatePassword(userID int64, password string) error {
+	// Check if user exists
+	user, err := u.UserRepository.GetByID(userID)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return ErrUserNotFound
+	}
+
+	// Hash password
+	hashedPassword, err := service.HashPassword(password)
+	if err != nil {
+		return err
+	}
+
+	// Update password
+	return u.UserRepository.UpdatePassword(userID, hashedPassword)
+}

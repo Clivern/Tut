@@ -54,6 +54,10 @@ export const authAPI = {
   login: (data) => api.post('public/action/login', data),
   logout: () => api.post('public/action/logout'),
   getProfile: () => api.get('/action/profile'),
+  updateProfile: (data) => api.put('/action/profile', data),
+  updatePassword: (data) => api.post('/action/profile/password', data),
+  getAPIKey: () => api.get('/action/profile/api-key'),
+  rotateAPIKey: () => api.post('/action/profile/api-key/rotate'),
 }
 
 export const setupAPI = {
@@ -97,3 +101,4 @@ export const bucketAPI = {
     params: { path: encodeURIComponent(path), type },
   }),
 }
+

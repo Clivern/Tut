@@ -182,6 +182,32 @@ func (r *UserRepository) UpdateLastLogin(id int64) error {
 	return err
 }
 
+// UpdatePassword updates a user's password.
+func (r *UserRepository) UpdatePassword(id int64, password string) error {
+	_, err := r.db.Exec(
+		`UPDATE users SET
+			password = ?, updated_at = ?
+		WHERE id = ?`,
+		password,
+		time.Now().UTC(),
+		id,
+	)
+	return err
+}
+
+// UpdateAPIKey updates a user's API key.
+func (r *UserRepository) UpdateAPIKey(id int64, apiKey string) error {
+	_, err := r.db.Exec(
+		`UPDATE users SET
+			api_key = ?, updated_at = ?
+		WHERE id = ?`,
+		apiKey,
+		time.Now().UTC(),
+		id,
+	)
+	return err
+}
+
 // Delete removes a user from the database.
 func (r *UserRepository) Delete(id int64) error {
 	_, err := r.db.Exec("DELETE FROM users WHERE id = ?", id)
