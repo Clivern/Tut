@@ -18,7 +18,7 @@ import (
 
 // CreateBucketRequest represents the create bucket request payload
 type CreateBucketRequest struct {
-	Name         string            `json:"name" validate:"required,min=3,max=63" label:"Bucket Name"`
+	Name         string            `json:"name" validate:"required,bucket_name" label:"Bucket Name"`
 	Region       string            `json:"region" validate:"omitempty,max=100" label:"Region"`
 	Tags         map[string]string `json:"tags" label:"Tags"`
 	Versioning   bool              `json:"versioning" label:"Versioning"`
@@ -27,7 +27,7 @@ type CreateBucketRequest struct {
 
 // UpdateBucketRequest represents the update bucket request payload
 type UpdateBucketRequest struct {
-	Name         string            `json:"name" validate:"omitempty,min=3,max=63" label:"Bucket Name"`
+	Name         string            `json:"name" validate:"omitempty,bucket_name" label:"Bucket Name"`
 	Region       string            `json:"region" validate:"omitempty,max=100" label:"Region"`
 	Tags         map[string]string `json:"tags" label:"Tags"`
 	Versioning   *bool             `json:"versioning" label:"Versioning"`
@@ -57,12 +57,6 @@ func CreateBucketAction(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, module.ErrBucketNameAlreadyExists) {
 			service.WriteJSON(w, http.StatusConflict, map[string]interface{}{
 				"errorMessage": "Bucket with this name already exists",
-			})
-			return
-		}
-		if errors.Is(err, module.ErrInvalidBucketName) {
-			service.WriteJSON(w, http.StatusBadRequest, map[string]interface{}{
-				"errorMessage": "Invalid bucket name. Bucket names must be 3-63 characters, lowercase, and can only contain letters, numbers, dots, and hyphens",
 			})
 			return
 		}
@@ -165,12 +159,6 @@ func UpdateBucketAction(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, module.ErrBucketNameAlreadyExists) {
 			service.WriteJSON(w, http.StatusConflict, map[string]interface{}{
 				"errorMessage": "Bucket with this name already exists",
-			})
-			return
-		}
-		if errors.Is(err, module.ErrInvalidBucketName) {
-			service.WriteJSON(w, http.StatusBadRequest, map[string]interface{}{
-				"errorMessage": "Invalid bucket name. Bucket names must be 3-63 characters, lowercase, and can only contain letters, numbers, dots, and hyphens",
 			})
 			return
 		}

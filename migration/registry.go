@@ -89,6 +89,12 @@ func GetAll() []Migration {
 			Up:          createNodesMetaTable,
 			Down:        dropNodesMetaTable,
 		},
+		{
+			Version:     "20250101000012",
+			Description: "Create bucket_access table",
+			Up:          createBucketAccessTable,
+			Down:        dropBucketAccessTable,
+		},
 	}
 }
 
@@ -511,5 +517,54 @@ func createNodesMetaTable(db *sql.DB) error {
 // dropNodesMetaTable drops the nodes_meta table
 func dropNodesMetaTable(db *sql.DB) error {
 	_, err := db.Exec("DROP TABLE IF EXISTS nodes_meta")
+	return err
+}
+
+// createBucketAccessTable creates the bucket_access table
+func createBucketAccessTable(db *sql.DB) error {
+	driver := detectDriver(db)
+	var query string
+
+	switch driver {
+	case "sqlite":
+		query = `
+		CREATE TABLE bucket_access (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			bucket_id INTEGER NOT NULL,
+			user_id INTEGER NOT NULL,
+			permission VARCHAR(50) NOT NULL DEFAULT 'read',
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (bucket_id) REFERENCES buckets(id) ON DELETE CASCADE,
+			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+			UNIQUE(bucket_id, user_id)
+		)`
+	case "postgres":
+		query = `
+		CREATE TABLE bucket_access (
+			id SERIAL PRIMARY KEY,
+			bucket_id INT NOT NULL,
+			user_id INT NOT NULL,
+			permission VARCHAR(50) NOT NULL DEFAULT 'read',
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (bucket_id) REFERENCES buckets(id) ON DELETE CASCADE,
+			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+			UNIQUE (bucket_id, user_id)
+		);
+		CREATE INDEX idx_bucket_id ON bucket_access(bucket_id);
+		CREATE INDEX idx_user_id ON bucket_access(user_id);
+		CREATE INDEX idx_permission ON bucket_access(permission)`
+	default:
+		return fmt.Errorf("unsupported database driver: %s", driver)
+	}
+
+	_, err := db.Exec(query)
+	return err
+}
+
+// dropBucketAccessTable drops the bucket_access table
+func dropBucketAccessTable(db *sql.DB) error {
+	_, err := db.Exec("DROP TABLE IF EXISTS bucket_access")
 	return err
 }

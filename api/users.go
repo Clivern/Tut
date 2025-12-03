@@ -183,11 +183,13 @@ func UpdateUserAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListUsersAction handles user listing requests with pagination
+// Supports optional email search query parameter for filtering by email address
 func ListUsersAction(w http.ResponseWriter, r *http.Request) {
 	log.Debug().Msg("List users endpoint called")
 
 	limitStr := r.URL.Query().Get("limit")
 	offsetStr := r.URL.Query().Get("offset")
+	emailQuery := r.URL.Query().Get("email")
 
 	limit := 50
 	offset := 0
@@ -206,8 +208,9 @@ func ListUsersAction(w http.ResponseWriter, r *http.Request) {
 
 	userModule := module.NewUser(db.NewUserRepository(db.GetDB()))
 	result, err := userModule.ListUsers(&module.ListUsersOptions{
-		Limit:  limit,
-		Offset: offset,
+		Limit:      limit,
+		Offset:     offset,
+		EmailQuery: emailQuery,
 	})
 
 	if err != nil {

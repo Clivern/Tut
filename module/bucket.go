@@ -15,7 +15,6 @@ import (
 var (
 	ErrBucketNotFound          = errors.New("bucket not found")
 	ErrBucketNameAlreadyExists = errors.New("bucket with this name already exists")
-	ErrInvalidBucketName       = errors.New("invalid bucket name")
 )
 
 // Bucket handles bucket management operations.
@@ -39,11 +38,6 @@ type CreateBucketOptions struct {
 
 // CreateBucket creates a new bucket.
 func (b *Bucket) CreateBucket(options *CreateBucketOptions) (*db.Bucket, error) {
-	// Validate bucket name
-	if err := validateBucketName(options.Name); err != nil {
-		return nil, err
-	}
-
 	existingBucket, err := b.BucketRepository.GetByName(options.Name)
 	if err != nil {
 		return nil, err
@@ -71,8 +65,8 @@ func (b *Bucket) CreateBucket(options *CreateBucketOptions) (*db.Bucket, error) 
 	return bucket, nil
 }
 
-// GetBucket retrieves a bucket by name.
-func (b *Bucket) GetBucket(name string) (*db.Bucket, error) {
+// GetBucketByName retrieves a bucket by name.
+func (b *Bucket) GetBucketByName(name string) (*db.Bucket, error) {
 	bucket, err := b.BucketRepository.GetByName(name)
 	if err != nil {
 		return nil, err
@@ -115,9 +109,6 @@ func (b *Bucket) UpdateBucket(name string, options *UpdateBucketOptions) (*db.Bu
 	}
 
 	if options.Name != "" && options.Name != bucket.Name {
-		if err := validateBucketName(options.Name); err != nil {
-			return nil, err
-		}
 		existingBucket, err := b.BucketRepository.GetByName(options.Name)
 		if err != nil {
 			return nil, err
@@ -162,9 +153,6 @@ func (b *Bucket) UpdateBucketByID(id int64, options *UpdateBucketOptions) (*db.B
 	}
 
 	if options.Name != "" && options.Name != bucket.Name {
-		if err := validateBucketName(options.Name); err != nil {
-			return nil, err
-		}
 		existingBucket, err := b.BucketRepository.GetByName(options.Name)
 		if err != nil {
 			return nil, err
@@ -239,45 +227,4 @@ func (b *Bucket) DeleteBucketByID(id int64) error {
 	}
 
 	return b.BucketRepository.Delete(bucket.ID)
-}
-
-// validateBucketName validates a bucket name according to common S3-compatible rules.
-func validateBucketName(name string) error {
-	name = strings.TrimSpace(name)
-	if name == "" {
-		return ErrInvalidBucketName
-	}
-
-	// Bucket names must be 3-63 characters long
-	if len(name) < 3 || len(name) > 63 {
-		return ErrInvalidBucketName
-	}
-
-	// Bucket names must be lowercase
-	if name != strings.ToLower(name) {
-		return ErrInvalidBucketName
-	}
-
-	// Bucket names can only contain lowercase letters, numbers, dots, and hyphens
-	for _, char := range name {
-		if !((char >= 'a' && char <= 'z') ||
-			(char >= '0' && char <= '9') ||
-			char == '.' ||
-			char == '-') {
-			return ErrInvalidBucketName
-		}
-	}
-
-	// Bucket names cannot start or end with a dot or hyphen
-	if name[0] == '.' || name[0] == '-' ||
-		name[len(name)-1] == '.' || name[len(name)-1] == '-' {
-		return ErrInvalidBucketName
-	}
-
-	// Bucket names cannot contain consecutive dots
-	if strings.Contains(name, "..") {
-		return ErrInvalidBucketName
-	}
-
-	return nil
 }

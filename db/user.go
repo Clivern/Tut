@@ -232,6 +232,54 @@ func (r *UserRepository) Count() (int64, error) {
 	return count, err
 }
 
+// SearchByEmail searches for users by email with partial matching.
+func (r *UserRepository) SearchByEmail(emailQuery string, limit, offset int) ([]*User, error) {
+	searchPattern := "%" + emailQuery + "%"
+	rows, err := r.db.Query(
+		`SELECT id, email, password, role, api_key, is_active, last_login_at, created_at, updated_at
+		FROM users
+		WHERE email LIKE ?
+		ORDER BY created_at DESC
+		LIMIT ? OFFSET ?`,
+		searchPattern,
+		limit,
+		offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []*User
+	for rows.Next() {
+		user := &User{}
+		if err := rows.Scan(
+			&user.ID,
+			&user.Email,
+			&user.Password,
+			&user.Role,
+			&user.APIKey,
+			&user.IsActive,
+			&user.LastLoginAt,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	return users, rows.Err()
+}
+
+// CountByEmail returns the total number of users matching the email query.
+func (r *UserRepository) CountByEmail(emailQuery string) (int64, error) {
+	searchPattern := "%" + emailQuery + "%"
+	var count int64
+	err := r.db.QueryRow("SELECT COUNT(*) FROM users WHERE email LIKE ?", searchPattern).Scan(&count)
+	return count, err
+}
+
 // UserMeta represents metadata associated with a user.
 type UserMeta struct {
 	ID        int64

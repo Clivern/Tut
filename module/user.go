@@ -134,8 +134,9 @@ func (u *User) UpdateUser(options *UpdateUserOptions) (*db.User, error) {
 
 // ListUsersOptions contains options for listing users.
 type ListUsersOptions struct {
-	Limit  int
-	Offset int
+	Limit      int
+	Offset     int
+	EmailQuery string
 }
 
 // ListUsersResult contains the result of listing users.
@@ -145,15 +146,32 @@ type ListUsersResult struct {
 }
 
 // ListUsers retrieves a list of users with pagination.
+// If EmailQuery is provided, it searches for users by email (partial match).
 func (u *User) ListUsers(options *ListUsersOptions) (*ListUsersResult, error) {
-	users, err := u.UserRepository.List(options.Limit, options.Offset)
-	if err != nil {
-		return nil, err
-	}
+	var users []*db.User
+	var total int64
+	var err error
 
-	total, err := u.UserRepository.Count()
-	if err != nil {
-		return nil, err
+	if options.EmailQuery != "" {
+		users, err = u.UserRepository.SearchByEmail(options.EmailQuery, options.Limit, options.Offset)
+		if err != nil {
+			return nil, err
+		}
+
+		total, err = u.UserRepository.CountByEmail(options.EmailQuery)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		users, err = u.UserRepository.List(options.Limit, options.Offset)
+		if err != nil {
+			return nil, err
+		}
+
+		total, err = u.UserRepository.Count()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &ListUsersResult{
