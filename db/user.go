@@ -19,6 +19,7 @@ const (
 // User represents a user in the database.
 type User struct {
 	ID          int64
+	Name        string
 	Email       string
 	Password    string
 	Role        string
@@ -42,8 +43,9 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 // Create inserts a new user into the database.
 func (r *UserRepository) Create(user *User) error {
 	result, err := r.db.Exec(
-		`INSERT INTO users (email, password, role, api_key, is_active, last_login_at)
-		VALUES (?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO users (name, email, password, role, api_key, is_active, last_login_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		user.Name,
 		user.Email,
 		user.Password,
 		user.Role,
@@ -63,12 +65,13 @@ func (r *UserRepository) Create(user *User) error {
 func (r *UserRepository) GetByID(id int64) (*User, error) {
 	user := &User{}
 	err := r.db.QueryRow(
-		`SELECT id, email, password, role, api_key, is_active, last_login_at, created_at, updated_at
+		`SELECT id, name, email, password, role, api_key, is_active, last_login_at, created_at, updated_at
 		FROM users
 		WHERE id = ?`,
 		id,
 	).Scan(
 		&user.ID,
+		&user.Name,
 		&user.Email,
 		&user.Password,
 		&user.Role,
@@ -93,12 +96,13 @@ func (r *UserRepository) GetByID(id int64) (*User, error) {
 func (r *UserRepository) GetByEmail(email string) (*User, error) {
 	user := &User{}
 	err := r.db.QueryRow(
-		`SELECT id, email, password, role, api_key, is_active, last_login_at, created_at, updated_at
+		`SELECT id, name, email, password, role, api_key, is_active, last_login_at, created_at, updated_at
 		FROM users
 		WHERE email = ?`,
 		email,
 	).Scan(
 		&user.ID,
+		&user.Name,
 		&user.Email,
 		&user.Password,
 		&user.Role,
@@ -123,12 +127,13 @@ func (r *UserRepository) GetByEmail(email string) (*User, error) {
 func (r *UserRepository) GetByAPIKey(apiKey string) (*User, error) {
 	user := &User{}
 	err := r.db.QueryRow(
-		`SELECT id, email, password, role, api_key, is_active, last_login_at, created_at, updated_at
+		`SELECT id, name, email, password, role, api_key, is_active, last_login_at, created_at, updated_at
 		FROM users
 		WHERE api_key = ?`,
 		apiKey,
 	).Scan(
 		&user.ID,
+		&user.Name,
 		&user.Email,
 		&user.Password,
 		&user.Role,
@@ -153,9 +158,10 @@ func (r *UserRepository) GetByAPIKey(apiKey string) (*User, error) {
 func (r *UserRepository) Update(user *User) error {
 	_, err := r.db.Exec(
 		`UPDATE users SET
-			email = ?, password = ?, role = ?, api_key = ?, is_active = ?,
+			name = ?, email = ?, password = ?, role = ?, api_key = ?, is_active = ?,
 			last_login_at = ?, updated_at = ?
 		WHERE id = ?`,
+		user.Name,
 		user.Email,
 		user.Password,
 		user.Role,
@@ -217,7 +223,7 @@ func (r *UserRepository) Delete(id int64) error {
 // List retrieves all users with pagination.
 func (r *UserRepository) List(limit, offset int) ([]*User, error) {
 	rows, err := r.db.Query(
-		`SELECT id, email, password, role, api_key, is_active, last_login_at, created_at, updated_at
+		`SELECT id, name, email, password, role, api_key, is_active, last_login_at, created_at, updated_at
 		FROM users
 		ORDER BY created_at DESC
 		LIMIT ? OFFSET ?`,
@@ -234,6 +240,7 @@ func (r *UserRepository) List(limit, offset int) ([]*User, error) {
 		user := &User{}
 		if err := rows.Scan(
 			&user.ID,
+			&user.Name,
 			&user.Email,
 			&user.Password,
 			&user.Role,
@@ -262,7 +269,7 @@ func (r *UserRepository) Count() (int64, error) {
 func (r *UserRepository) SearchByEmail(emailQuery string, limit, offset int) ([]*User, error) {
 	searchPattern := "%" + emailQuery + "%"
 	rows, err := r.db.Query(
-		`SELECT id, email, password, role, api_key, is_active, last_login_at, created_at, updated_at
+		`SELECT id, name, email, password, role, api_key, is_active, last_login_at, created_at, updated_at
 		FROM users
 		WHERE email LIKE ?
 		ORDER BY created_at DESC
@@ -281,6 +288,7 @@ func (r *UserRepository) SearchByEmail(emailQuery string, limit, offset int) ([]
 		user := &User{}
 		if err := rows.Scan(
 			&user.ID,
+			&user.Name,
 			&user.Email,
 			&user.Password,
 			&user.Role,

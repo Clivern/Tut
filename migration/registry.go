@@ -148,6 +148,7 @@ func createUsersTable(db *sql.DB) error {
 		query = `
 		CREATE TABLE users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name VARCHAR(255),
 			email VARCHAR(255) NOT NULL UNIQUE,
 			password VARCHAR(255) NOT NULL,
 			role VARCHAR(50) NOT NULL DEFAULT 'user',
@@ -161,6 +162,7 @@ func createUsersTable(db *sql.DB) error {
 		query = `
 		CREATE TABLE users (
 			id SERIAL PRIMARY KEY,
+			name VARCHAR(255),
 			email VARCHAR(255) NOT NULL UNIQUE,
 			password VARCHAR(255) NOT NULL,
 			role VARCHAR(50) NOT NULL DEFAULT 'user',

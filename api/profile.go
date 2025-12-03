@@ -29,11 +29,13 @@ func GetProfileAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	gravatar := &service.Gravatar{}
 	service.WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"user": map[string]interface{}{
 			"id":          user.ID,
 			"email":       user.Email,
 			"role":        user.Role,
+			"avatar":      gravatar.GetGravatar(user.Email, 200),
 			"isActive":    user.IsActive,
 			"lastLoginAt": user.LastLoginAt.UTC().Format(time.RFC3339),
 			"createdAt":   user.CreatedAt.UTC().Format(time.RFC3339),
@@ -94,12 +96,14 @@ func UpdateProfileAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	gravatar := &service.Gravatar{}
 	log.Info().Int64("userID", user.ID).Msg("Profile updated successfully")
 	service.WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"user": map[string]interface{}{
 			"id":          updatedUser.ID,
 			"email":       updatedUser.Email,
 			"role":        updatedUser.Role,
+			"avatar":      gravatar.GetGravatar(updatedUser.Email, 200),
 			"isActive":    updatedUser.IsActive,
 			"lastLoginAt": updatedUser.LastLoginAt.UTC().Format(time.RFC3339),
 			"createdAt":   updatedUser.CreatedAt.UTC().Format(time.RFC3339),
@@ -121,7 +125,6 @@ func GetAPIKeyAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch fresh user data to get current API key
 	userModule := module.NewUser(db.NewUserRepository(db.GetDB()))
 	user, err := userModule.GetUser(currentUser.ID)
 	if err != nil {

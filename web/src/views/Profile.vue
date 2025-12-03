@@ -161,15 +161,63 @@
                 </div>
                 <div class="flex justify-end pt-2">
                   <button
-                    @click="rotateAPIKey"
+                    @click="openRotateModal"
                     class="btn-secondary w-full"
                     :disabled="rotatingAPIKey || loadingAPIKey"
                   >
-                    <span v-if="rotatingAPIKey">Rotating...</span>
-                    <span v-else>Rotate API Key</span>
+                    Rotate API Key
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rotate API Key Confirmation Modal -->
+      <div v-if="showRotateModal" class="fixed inset-0 z-50 overflow-y-auto" @click.self="closeRotateModal">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+          <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="closeRotateModal"></div>
+          <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-6 pt-6 pb-4">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-theme-text">Rotate API Key</h3>
+                <button
+                  type="button"
+                  @click="closeRotateModal"
+                  class="text-theme-textLight hover:text-theme-text"
+                >
+                  <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <p class="text-sm text-theme-textLight">
+                Are you sure you want to rotate your API key? The current key will be invalidated and you will need to update any applications using it.
+              </p>
+            </div>
+            <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+              <button
+                type="button"
+                @click="closeRotateModal"
+                class="btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                @click="rotateAPIKey"
+                class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none transition-all duration-150"
+                :disabled="rotatingAPIKey"
+              >
+                <span v-if="!rotatingAPIKey">Rotate</span>
+                <span v-else class="flex items-center">
+                  <svg class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Rotating...
+                </span>
+              </button>
             </div>
           </div>
         </div>
@@ -216,6 +264,7 @@ const copiedAPIKey = ref(false)
 const loadingAPIKey = ref(false)
 const rotatingAPIKey = ref(false)
 const apiKeyTextarea = ref(null)
+const showRotateModal = ref(false)
 
 // Computed property for displayed API key value
 const displayedAPIKey = computed(() => {
@@ -379,13 +428,19 @@ const copyAPIKey = async () => {
   }
 }
 
+// Open rotate API key modal
+const openRotateModal = () => {
+  showRotateModal.value = true
+}
+
+// Close rotate API key modal
+const closeRotateModal = () => {
+  showRotateModal.value = false
+}
+
 // Rotate API key
 const rotateAPIKey = async () => {
   if (rotatingAPIKey.value) return
-
-  if (!confirm('Are you sure you want to rotate your API key? The current key will be invalidated and you will need to update any applications using it.')) {
-    return
-  }
 
   rotatingAPIKey.value = true
   error.value = null
@@ -401,6 +456,7 @@ const rotateAPIKey = async () => {
       setTimeout(() => {
         successMessage.value = null
       }, 5000)
+      closeRotateModal()
     }
   } catch (err) {
     console.error('Rotate API key error:', err)

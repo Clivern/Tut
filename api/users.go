@@ -66,6 +66,8 @@ func CreateUserAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	gravatar := &service.Gravatar{}
+
 	log.Info().Int64("userID", user.ID).Msg("User created successfully")
 	service.WriteJSON(w, http.StatusCreated, map[string]interface{}{
 		"id":          user.ID,
@@ -73,6 +75,7 @@ func CreateUserAction(w http.ResponseWriter, r *http.Request) {
 		"role":        user.Role,
 		"isActive":    user.IsActive,
 		"apiKey":      user.APIKey,
+		"avatar":      gravatar.GetGravatar(user.Email, 200),
 		"lastLoginAt": user.LastLoginAt.UTC().Format(time.RFC3339),
 		"createdAt":   user.CreatedAt.UTC().Format(time.RFC3339),
 		"updatedAt":   user.UpdatedAt.UTC().Format(time.RFC3339),
@@ -107,6 +110,7 @@ func GetUserAction(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+	gravatar := &service.Gravatar{}
 
 	service.WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"id":          user.ID,
@@ -114,6 +118,7 @@ func GetUserAction(w http.ResponseWriter, r *http.Request) {
 		"role":        user.Role,
 		"isActive":    user.IsActive,
 		"apiKey":      user.APIKey,
+		"avatar":      gravatar.GetGravatar(user.Email, 200),
 		"lastLoginAt": user.LastLoginAt.UTC().Format(time.RFC3339),
 		"createdAt":   user.CreatedAt.UTC().Format(time.RFC3339),
 		"updatedAt":   user.UpdatedAt.UTC().Format(time.RFC3339),
@@ -168,6 +173,7 @@ func UpdateUserAction(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+	gravatar := &service.Gravatar{}
 
 	log.Info().Int64("userID", user.ID).Msg("User updated successfully")
 	service.WriteJSON(w, http.StatusOK, map[string]interface{}{
@@ -176,6 +182,7 @@ func UpdateUserAction(w http.ResponseWriter, r *http.Request) {
 		"role":        user.Role,
 		"isActive":    user.IsActive,
 		"apiKey":      user.APIKey,
+		"avatar":      gravatar.GetGravatar(user.Email, 200),
 		"lastLoginAt": user.LastLoginAt.UTC().Format(time.RFC3339),
 		"createdAt":   user.CreatedAt.UTC().Format(time.RFC3339),
 		"updatedAt":   user.UpdatedAt.UTC().Format(time.RFC3339),
@@ -221,6 +228,7 @@ func ListUsersAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	gravatar := &service.Gravatar{}
 	userList := make([]map[string]interface{}, 0, len(result.Users))
 	for _, user := range result.Users {
 		userList = append(userList, map[string]interface{}{
@@ -229,6 +237,7 @@ func ListUsersAction(w http.ResponseWriter, r *http.Request) {
 			"role":        user.Role,
 			"isActive":    user.IsActive,
 			"apiKey":      user.APIKey,
+			"avatar":      gravatar.GetGravatar(user.Email, 200),
 			"lastLoginAt": user.LastLoginAt.UTC().Format(time.RFC3339),
 			"createdAt":   user.CreatedAt.UTC().Format(time.RFC3339),
 			"updatedAt":   user.UpdatedAt.UTC().Format(time.RFC3339),

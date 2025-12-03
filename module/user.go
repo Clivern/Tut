@@ -39,7 +39,6 @@ type CreateUserOptions struct {
 
 // CreateUser creates a new user.
 func (u *User) CreateUser(options *CreateUserOptions) (*db.User, error) {
-	// Check if user with email already exists
 	existingUser, err := u.UserRepository.GetByEmail(options.Email)
 	if err != nil {
 		return nil, err
@@ -75,9 +74,11 @@ func (u *User) GetUser(userID int64) (*db.User, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if user == nil {
 		return nil, ErrUserNotFound
 	}
+
 	return user, nil
 }
 
@@ -92,7 +93,6 @@ type UpdateUserOptions struct {
 
 // UpdateUser updates an existing user.
 func (u *User) UpdateUser(options *UpdateUserOptions) (*db.User, error) {
-	// Get existing user
 	user, err := u.UserRepository.GetByID(options.UserID)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,6 @@ func (u *User) UpdateUser(options *UpdateUserOptions) (*db.User, error) {
 		return nil, ErrUserNotFound
 	}
 
-	// Check if email is being changed and if it's already taken
 	if options.Email != user.Email {
 		existingUser, err := u.UserRepository.GetByEmail(options.Email)
 		if err != nil {
@@ -116,7 +115,6 @@ func (u *User) UpdateUser(options *UpdateUserOptions) (*db.User, error) {
 	user.Role = options.Role
 	user.IsActive = options.IsActive
 
-	// Update password only if provided
 	if options.Password != "" {
 		hashedPassword, err := service.HashPassword(options.Password)
 		if err != nil {
@@ -182,7 +180,6 @@ func (u *User) ListUsers(options *ListUsersOptions) (*ListUsersResult, error) {
 
 // DeleteUser deletes a user by ID.
 func (u *User) DeleteUser(userID int64) error {
-	// Check if user exists
 	user, err := u.UserRepository.GetByID(userID)
 	if err != nil {
 		return err
@@ -191,13 +188,11 @@ func (u *User) DeleteUser(userID int64) error {
 		return ErrUserNotFound
 	}
 
-	// Delete user
 	return u.UserRepository.Delete(userID)
 }
 
 // RegenerateAPIKey generates a new API key for a user.
 func (u *User) RegenerateAPIKey(userID int64) (string, error) {
-	// Check if user exists
 	user, err := u.UserRepository.GetByID(userID)
 	if err != nil {
 		return "", err
@@ -206,10 +201,8 @@ func (u *User) RegenerateAPIKey(userID int64) (string, error) {
 		return "", ErrUserNotFound
 	}
 
-	// Generate new API key
 	newAPIKey := uuid.New().String()
 
-	// Update API key
 	if err := u.UserRepository.UpdateAPIKey(userID, newAPIKey); err != nil {
 		return "", err
 	}
@@ -219,21 +212,19 @@ func (u *User) RegenerateAPIKey(userID int64) (string, error) {
 
 // UpdatePassword updates a user's password.
 func (u *User) UpdatePassword(userID int64, password string) error {
-	// Check if user exists
 	user, err := u.UserRepository.GetByID(userID)
 	if err != nil {
 		return err
 	}
+
 	if user == nil {
 		return ErrUserNotFound
 	}
 
-	// Hash password
 	hashedPassword, err := service.HashPassword(password)
 	if err != nil {
 		return err
 	}
 
-	// Update password
 	return u.UserRepository.UpdatePassword(userID, hashedPassword)
 }
