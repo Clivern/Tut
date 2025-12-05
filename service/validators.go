@@ -105,11 +105,9 @@ func validateBucketName(fl validator.FieldLevel) bool {
 func validateRegion(fl validator.FieldLevel) bool {
 	region := strings.TrimSpace(fl.Field().String())
 
-	// Empty region is allowed (handled by omitempty)
 	if region == "" {
 		return true
 	}
 
-	// Check if region is in the supported list
 	return slices.Contains(SupportedRegions, region)
 }
