@@ -67,7 +67,13 @@
                 aria-expanded="false"
               >
                 <div class="w-8 h-8 rounded-full overflow-hidden bg-theme-text flex items-center justify-center">
-                  <span class="text-white text-xs font-medium">
+                  <img
+                    v-if="userAvatar"
+                    :src="userAvatar"
+                    :alt="userEmail"
+                    class="w-full h-full object-cover"
+                  />
+                  <span v-else class="text-white text-xs font-medium">
                     {{ userInitials }}
                   </span>
                 </div>
@@ -214,7 +220,13 @@
           <div class="border-t border-theme-border mt-2 pt-2">
             <div class="flex items-center space-x-3 px-3 py-2 mb-2">
               <div class="w-10 h-10 rounded-full overflow-hidden bg-theme-text flex items-center justify-center flex-shrink-0">
-                <span class="text-white text-sm font-medium">
+                <img
+                  v-if="userAvatar"
+                  :src="userAvatar"
+                  :alt="userEmail"
+                  class="w-full h-full object-cover"
+                />
+                <span v-else class="text-white text-sm font-medium">
                   {{ userInitials }}
                 </span>
               </div>
@@ -272,7 +284,12 @@ const userRole = computed(() => {
   return role.charAt(0).toUpperCase() + role.slice(1)
 })
 
-// Get user initials for avatar
+// Get user avatar URL
+const userAvatar = computed(() => {
+  return user.value?.avatar || null
+})
+
+// Get user initials for avatar fallback
 const userInitials = computed(() => {
   if (!user.value?.email) return 'U'
   const email = user.value.email
