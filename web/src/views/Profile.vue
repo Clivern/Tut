@@ -40,19 +40,6 @@
                     :disabled="savingProfile"
                   />
                 </div>
-                <div>
-                  <label class="form-label">Role</label>
-                  <input
-                    :value="profile.role"
-                    type="text"
-                    class="input-field bg-gray-50"
-                    readonly
-                    disabled
-                  />
-                  <p class="text-xs text-theme-textLight mt-1">
-                    Your role determines your access level in the system.
-                  </p>
-                </div>
                 <div class="flex justify-end pt-2">
                   <button
                     @click="saveProfile"

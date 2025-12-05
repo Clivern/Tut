@@ -83,9 +83,9 @@ export const settingsAPI = {
 // API endpoints for buckets
 export const bucketAPI = {
   getBuckets: (params = {}) => api.get('/buckets', { params }),
-  getBucket: (name) => api.get(`/buckets/${encodeURIComponent(name)}`),
+  getBucket: (id) => api.get(`/buckets/${id}`),
   createBucket: (data) => api.post('/buckets', data),
-  deleteBucket: (name) => api.delete(`/buckets/${encodeURIComponent(name)}`),
+  deleteBucket: (id) => api.delete(`/buckets/${id}`),
   listBucketItems: (bucketName, params = {}) => api.get(`/buckets/${encodeURIComponent(bucketName)}/items`, { params }),
   uploadFile: (bucketName, path, formData) => api.post(`/buckets/${encodeURIComponent(bucketName)}/items`, formData, {
     params: { path: encodeURIComponent(path) },

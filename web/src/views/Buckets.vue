@@ -413,7 +413,7 @@ const handleDelete = async () => {
   successMessage.value = null
 
   try {
-    await bucketAPI.deleteBucket(bucketToDelete.value.name)
+    await bucketAPI.deleteBucket(bucketToDelete.value.id)
     successMessage.value = 'Bucket deleted successfully'
     closeDeleteModal()
     loadBuckets()

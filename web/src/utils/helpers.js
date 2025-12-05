@@ -1,8 +1,4 @@
-/**
- * Format a date to relative time (e.g., "2 hours ago", "3 days ago")
- * @param {string|Date} date - The date to format
- * @returns {string} - Formatted relative time string
- */
+
 export function formatDateToRelativeTime(date) {
   if (!date) return 'Unknown'
 
