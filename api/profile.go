@@ -33,6 +33,7 @@ func GetProfileAction(w http.ResponseWriter, r *http.Request) {
 	service.WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"user": map[string]interface{}{
 			"id":          user.ID,
+			"name":        user.Name,
 			"email":       user.Email,
 			"role":        user.Role,
 			"avatar":      gravatar.GetGravatar(user.Email, 200),
@@ -46,6 +47,7 @@ func GetProfileAction(w http.ResponseWriter, r *http.Request) {
 
 // UpdateProfileRequest represents the update profile request payload
 type UpdateProfileRequest struct {
+	Name  string `json:"name" validate:"omitempty,min=1,max=100" label:"Name"`
 	Email string `json:"email" validate:"required,email,min=4,max=60" label:"Email"`
 }
 
@@ -70,6 +72,7 @@ func UpdateProfileAction(w http.ResponseWriter, r *http.Request) {
 	userModule := module.NewUser(db.NewUserRepository(db.GetDB()))
 	updatedUser, err := userModule.UpdateUser(&module.UpdateUserOptions{
 		UserID:   user.ID,
+		Name:     req.Name,
 		Email:    req.Email,
 		Password: "",            // Don't update password
 		Role:     user.Role,     // Keep existing role
@@ -101,6 +104,7 @@ func UpdateProfileAction(w http.ResponseWriter, r *http.Request) {
 	service.WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"user": map[string]interface{}{
 			"id":          updatedUser.ID,
+			"name":        updatedUser.Name,
 			"email":       updatedUser.Email,
 			"role":        updatedUser.Role,
 			"avatar":      gravatar.GetGravatar(updatedUser.Email, 200),

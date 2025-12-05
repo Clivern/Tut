@@ -31,6 +31,7 @@ func NewUser(repo *db.UserRepository) *User {
 
 // CreateUserOptions contains options for creating a user.
 type CreateUserOptions struct {
+	Name     string
 	Email    string
 	Password string
 	Role     string
@@ -53,6 +54,7 @@ func (u *User) CreateUser(options *CreateUserOptions) (*db.User, error) {
 	}
 
 	user := &db.User{
+		Name:        options.Name,
 		Email:       options.Email,
 		Password:    hashedPassword,
 		Role:        options.Role,
@@ -85,6 +87,7 @@ func (u *User) GetUser(userID int64) (*db.User, error) {
 // UpdateUserOptions contains options for updating a user.
 type UpdateUserOptions struct {
 	UserID   int64
+	Name     string
 	Email    string
 	Password string
 	Role     string
@@ -111,6 +114,9 @@ func (u *User) UpdateUser(options *UpdateUserOptions) (*db.User, error) {
 		}
 	}
 
+	if options.Name != "" {
+		user.Name = options.Name
+	}
 	user.Email = options.Email
 	user.Role = options.Role
 	user.IsActive = options.IsActive

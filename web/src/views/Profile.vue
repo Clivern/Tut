@@ -31,6 +31,16 @@
               <h3 class="text-lg font-semibold text-theme-text mb-6">Account Information</h3>
               <div class="form-group">
                 <div>
+                  <label class="form-label">Name</label>
+                  <input
+                    v-model="profile.name"
+                    type="text"
+                    class="input-field"
+                    placeholder="Enter your name"
+                    :disabled="savingProfile"
+                  />
+                </div>
+                <div>
                   <label class="form-label">Email Address</label>
                   <input
                     v-model="profile.email"
@@ -231,6 +241,7 @@ const successMessage = ref(null)
 
 const profile = reactive({
   id: null,
+  name: '',
   email: '',
   role: '',
   isActive: false,
@@ -270,6 +281,7 @@ const loadProfile = async () => {
     const userData = response.data?.user || response.data
     if (userData) {
       profile.id = userData.id
+      profile.name = userData.name || ''
       profile.email = userData.email || ''
       profile.role = userData.role || ''
       profile.isActive = userData.isActive !== false
@@ -302,6 +314,7 @@ const saveProfile = async () => {
   successMessage.value = null
   try {
     const updateData = {
+      name: profile.name.trim(),
       email: profile.email.trim(),
     }
     const response = await authAPI.updateProfile(updateData)

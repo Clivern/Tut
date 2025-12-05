@@ -44,6 +44,9 @@
           <thead class="bg-notion-hover">
             <tr>
               <th class="px-6 py-3 text-left text-xs font-medium text-notion-textLight uppercase tracking-wider">
+                Name
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-notion-textLight uppercase tracking-wider">
                 Email
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-notion-textLight uppercase tracking-wider">
@@ -65,6 +68,9 @@
           </thead>
           <tbody class="bg-white divide-y divide-notion-border">
             <tr v-for="user in users" :key="user.id" class="hover:bg-notion-hover">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-notion-text">{{ user.name || 'N/A' }}</div>
+              </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm font-medium text-notion-text">{{ user.email }}</div>
               </td>
@@ -156,6 +162,18 @@
                 </button>
               </div>
               <div class="space-y-4">
+                <div>
+                  <label for="create-name" class="block text-sm font-medium text-notion-text mb-2">
+                    Name
+                  </label>
+                  <input
+                    id="create-name"
+                    v-model="createForm.name"
+                    type="text"
+                    class="input-field"
+                    placeholder="User name"
+                  />
+                </div>
                 <div>
                   <label for="create-email" class="block text-sm font-medium text-notion-text mb-2">
                     Email *
@@ -259,6 +277,18 @@
                 </button>
               </div>
               <div class="space-y-4">
+                <div>
+                  <label for="edit-name" class="block text-sm font-medium text-notion-text mb-2">
+                    Name
+                  </label>
+                  <input
+                    id="edit-name"
+                    v-model="editForm.name"
+                    type="text"
+                    class="input-field"
+                    placeholder="User name"
+                  />
+                </div>
                 <div>
                   <label for="edit-email" class="block text-sm font-medium text-notion-text mb-2">
                     Email *
@@ -424,6 +454,7 @@ const userToDelete = ref(null)
 
 // Forms
 const createForm = reactive({
+  name: '',
   email: '',
   password: '',
   role: 'user',
@@ -432,6 +463,7 @@ const createForm = reactive({
 
 const editForm = reactive({
   id: null,
+  name: '',
   email: '',
   password: '',
   role: 'user',
@@ -508,6 +540,7 @@ const goToPage = (newOffset) => {
 }
 
 const openCreateModal = () => {
+  createForm.name = ''
   createForm.email = ''
   createForm.password = ''
   createForm.role = 'user'
@@ -517,6 +550,7 @@ const openCreateModal = () => {
 
 const closeCreateModal = () => {
   showCreateModal.value = false
+  createForm.name = ''
   createForm.email = ''
   createForm.password = ''
   createForm.role = 'user'
@@ -530,6 +564,7 @@ const handleCreate = async () => {
 
   try {
     const response = await userAPI.createUser({
+      name: createForm.name.trim() || undefined,
       email: createForm.email,
       password: createForm.password,
       role: createForm.role,
@@ -562,6 +597,7 @@ const handleCreate = async () => {
 
 const openEditModal = (user) => {
   editForm.id = user.id
+  editForm.name = user.name || ''
   editForm.email = user.email
   editForm.password = ''
   editForm.role = user.role
@@ -572,6 +608,7 @@ const openEditModal = (user) => {
 const closeEditModal = () => {
   showEditModal.value = false
   editForm.id = null
+  editForm.name = ''
   editForm.email = ''
   editForm.password = ''
   editForm.role = 'user'
@@ -585,6 +622,7 @@ const handleUpdate = async () => {
 
   try {
     const payload = {
+      name: editForm.name.trim() || undefined,
       email: editForm.email,
       role: editForm.role,
       isActive: editForm.isActive

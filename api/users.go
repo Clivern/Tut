@@ -20,6 +20,7 @@ import (
 
 // CreateUserRequest represents the create user request payload
 type CreateUserRequest struct {
+	Name     string `json:"name" validate:"omitempty,min=1,max=100" label:"Name"`
 	Email    string `json:"email" validate:"required,email,min=4,max=60" label:"Email"`
 	Password string `json:"password" validate:"required,strong_password,min=8,max=60" label:"Password"`
 	Role     string `json:"role" validate:"required,oneof=admin user readonly" label:"Role"`
@@ -28,6 +29,7 @@ type CreateUserRequest struct {
 
 // UpdateUserRequest represents the update user request payload
 type UpdateUserRequest struct {
+	Name     string `json:"name" validate:"omitempty,min=1,max=100" label:"Name"`
 	Email    string `json:"email" validate:"required,email,min=4,max=60" label:"Email"`
 	Password string `json:"password" validate:"omitempty,strong_password,min=8,max=60" label:"Password"`
 	Role     string `json:"role" validate:"required,oneof=admin user readonly" label:"Role"`
@@ -46,6 +48,7 @@ func CreateUserAction(w http.ResponseWriter, r *http.Request) {
 
 	userModule := module.NewUser(db.NewUserRepository(db.GetDB()))
 	user, err := userModule.CreateUser(&module.CreateUserOptions{
+		Name:     req.Name,
 		Email:    req.Email,
 		Password: req.Password,
 		Role:     req.Role,
@@ -71,6 +74,7 @@ func CreateUserAction(w http.ResponseWriter, r *http.Request) {
 	log.Info().Int64("userID", user.ID).Msg("User created successfully")
 	service.WriteJSON(w, http.StatusCreated, map[string]interface{}{
 		"id":          user.ID,
+		"name":        user.Name,
 		"email":       user.Email,
 		"role":        user.Role,
 		"isActive":    user.IsActive,
@@ -114,6 +118,7 @@ func GetUserAction(w http.ResponseWriter, r *http.Request) {
 
 	service.WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"id":          user.ID,
+		"name":        user.Name,
 		"email":       user.Email,
 		"role":        user.Role,
 		"isActive":    user.IsActive,
@@ -148,6 +153,7 @@ func UpdateUserAction(w http.ResponseWriter, r *http.Request) {
 	userModule := module.NewUser(db.NewUserRepository(db.GetDB()))
 	user, err := userModule.UpdateUser(&module.UpdateUserOptions{
 		UserID:   userID,
+		Name:     req.Name,
 		Email:    req.Email,
 		Password: req.Password,
 		Role:     req.Role,
@@ -178,6 +184,7 @@ func UpdateUserAction(w http.ResponseWriter, r *http.Request) {
 	log.Info().Int64("userID", user.ID).Msg("User updated successfully")
 	service.WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"id":          user.ID,
+		"name":        user.Name,
 		"email":       user.Email,
 		"role":        user.Role,
 		"isActive":    user.IsActive,
@@ -233,6 +240,7 @@ func ListUsersAction(w http.ResponseWriter, r *http.Request) {
 	for _, user := range result.Users {
 		userList = append(userList, map[string]interface{}{
 			"id":          user.ID,
+			"name":        user.Name,
 			"email":       user.Email,
 			"role":        user.Role,
 			"isActive":    user.IsActive,

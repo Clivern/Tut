@@ -84,6 +84,7 @@ func LoginAction(w http.ResponseWriter, r *http.Request) {
 		"successMessage": "Login successful",
 		"user": map[string]interface{}{
 			"id":          user.ID,
+			"name":        user.Name,
 			"email":       user.Email,
 			"role":        user.Role,
 			"avatar":      gravatar.GetGravatar(user.Email, 200),

@@ -103,8 +103,8 @@
                 >
                   <div class="py-1">
                     <div class="px-4 py-3 border-b border-theme-border">
-                      <p class="text-sm font-medium text-theme-text">{{ userEmail }}</p>
-                      <p class="text-sm text-theme-textLight truncate">{{ userRole }}</p>
+                      <p class="text-sm font-medium text-theme-text">{{ userName }}</p>
+                      <p class="text-sm text-theme-textLight truncate">{{ userEmail }}</p>
                     </div>
                     <router-link
                       to="/admin/profile"
@@ -231,7 +231,8 @@
                 </span>
               </div>
               <div class="min-w-0 flex-1">
-                <p class="text-sm font-medium text-theme-text truncate">{{ userEmail }}</p>
+                <p class="text-sm font-medium text-theme-text truncate">{{ userName }}</p>
+                <p class="text-xs text-theme-textLight truncate">{{ userEmail }}</p>
                 <p class="text-xs text-theme-textLight truncate">{{ userRole }}</p>
               </div>
             </div>
@@ -273,6 +274,14 @@ const user = computed(() => authStore.currentUser)
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 
+// Get user name (fallback to email if name not available)
+const userName = computed(() => {
+  if (user.value?.name && user.value.name.trim()) {
+    return user.value.name
+  }
+  return user.value?.email || 'User'
+})
+
 // Get user email
 const userEmail = computed(() => {
   return user.value?.email || 'User'
@@ -291,10 +300,21 @@ const userAvatar = computed(() => {
 
 // Get user initials for avatar fallback
 const userInitials = computed(() => {
-  if (!user.value?.email) return 'U'
-  const email = user.value.email
-  // Get first letter of email
-  return email.charAt(0).toUpperCase()
+  if (!user.value) return 'U'
+  // Prefer name initials if available
+  if (user.value.name && user.value.name.trim()) {
+    const nameParts = user.value.name.trim().split(/\s+/)
+    if (nameParts.length >= 2) {
+      // First letter of first name + first letter of last name
+      return (nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)).toUpperCase()
+    }
+    return nameParts[0].charAt(0).toUpperCase()
+  }
+  // Fallback to email first letter
+  if (user.value.email) {
+    return user.value.email.charAt(0).toUpperCase()
+  }
+  return 'U'
 })
 
 const toggleMobileMenu = () => {
