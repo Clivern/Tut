@@ -31,6 +31,7 @@ func NewUser(repo *db.UserRepository) *User {
 
 // CreateUserOptions contains options for creating a user.
 type CreateUserOptions struct {
+	Name     string
 	Email    string
 	Password string
 	Role     string
@@ -39,7 +40,6 @@ type CreateUserOptions struct {
 
 // CreateUser creates a new user.
 func (u *User) CreateUser(options *CreateUserOptions) (*db.User, error) {
-	// Check if user with email already exists
 	existingUser, err := u.UserRepository.GetByEmail(options.Email)
 	if err != nil {
 		return nil, err
@@ -54,6 +54,7 @@ func (u *User) CreateUser(options *CreateUserOptions) (*db.User, error) {
 	}
 
 	user := &db.User{
+		Name:        options.Name,
 		Email:       options.Email,
 		Password:    hashedPassword,
 		Role:        options.Role,
@@ -75,15 +76,18 @@ func (u *User) GetUser(userID int64) (*db.User, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if user == nil {
 		return nil, ErrUserNotFound
 	}
+
 	return user, nil
 }
 
 // UpdateUserOptions contains options for updating a user.
 type UpdateUserOptions struct {
 	UserID   int64
+	Name     string
 	Email    string
 	Password string
 	Role     string
@@ -92,7 +96,6 @@ type UpdateUserOptions struct {
 
 // UpdateUser updates an existing user.
 func (u *User) UpdateUser(options *UpdateUserOptions) (*db.User, error) {
-	// Get existing user
 	user, err := u.UserRepository.GetByID(options.UserID)
 	if err != nil {
 		return nil, err
@@ -101,7 +104,6 @@ func (u *User) UpdateUser(options *UpdateUserOptions) (*db.User, error) {
 		return nil, ErrUserNotFound
 	}
 
-	// Check if email is being changed and if it's already taken
 	if options.Email != user.Email {
 		existingUser, err := u.UserRepository.GetByEmail(options.Email)
 		if err != nil {
@@ -112,11 +114,13 @@ func (u *User) UpdateUser(options *UpdateUserOptions) (*db.User, error) {
 		}
 	}
 
+	if options.Name != "" {
+		user.Name = options.Name
+	}
 	user.Email = options.Email
 	user.Role = options.Role
 	user.IsActive = options.IsActive
 
-	// Update password only if provided
 	if options.Password != "" {
 		hashedPassword, err := service.HashPassword(options.Password)
 		if err != nil {
@@ -134,8 +138,9 @@ func (u *User) UpdateUser(options *UpdateUserOptions) (*db.User, error) {
 
 // ListUsersOptions contains options for listing users.
 type ListUsersOptions struct {
-	Limit  int
-	Offset int
+	Limit      int
+	Offset     int
+	EmailQuery string
 }
 
 // ListUsersResult contains the result of listing users.
@@ -145,15 +150,32 @@ type ListUsersResult struct {
 }
 
 // ListUsers retrieves a list of users with pagination.
+// If EmailQuery is provided, it searches for users by email (partial match).
 func (u *User) ListUsers(options *ListUsersOptions) (*ListUsersResult, error) {
-	users, err := u.UserRepository.List(options.Limit, options.Offset)
-	if err != nil {
-		return nil, err
-	}
+	var users []*db.User
+	var total int64
+	var err error
 
-	total, err := u.UserRepository.Count()
-	if err != nil {
-		return nil, err
+	if options.EmailQuery != "" {
+		users, err = u.UserRepository.SearchByEmail(options.EmailQuery, options.Limit, options.Offset)
+		if err != nil {
+			return nil, err
+		}
+
+		total, err = u.UserRepository.CountByEmail(options.EmailQuery)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		users, err = u.UserRepository.List(options.Limit, options.Offset)
+		if err != nil {
+			return nil, err
+		}
+
+		total, err = u.UserRepository.Count()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &ListUsersResult{
@@ -164,7 +186,6 @@ func (u *User) ListUsers(options *ListUsersOptions) (*ListUsersResult, error) {
 
 // DeleteUser deletes a user by ID.
 func (u *User) DeleteUser(userID int64) error {
-	// Check if user exists
 	user, err := u.UserRepository.GetByID(userID)
 	if err != nil {
 		return err
@@ -173,6 +194,43 @@ func (u *User) DeleteUser(userID int64) error {
 		return ErrUserNotFound
 	}
 
-	// Delete user
 	return u.UserRepository.Delete(userID)
+}
+
+// RegenerateAPIKey generates a new API key for a user.
+func (u *User) RegenerateAPIKey(userID int64) (string, error) {
+	user, err := u.UserRepository.GetByID(userID)
+	if err != nil {
+		return "", err
+	}
+	if user == nil {
+		return "", ErrUserNotFound
+	}
+
+	newAPIKey := uuid.New().String()
+
+	if err := u.UserRepository.UpdateAPIKey(userID, newAPIKey); err != nil {
+		return "", err
+	}
+
+	return newAPIKey, nil
+}
+
+// UpdatePassword updates a user's password.
+func (u *User) UpdatePassword(userID int64, password string) error {
+	user, err := u.UserRepository.GetByID(userID)
+	if err != nil {
+		return err
+	}
+
+	if user == nil {
+		return ErrUserNotFound
+	}
+
+	hashedPassword, err := service.HashPassword(password)
+	if err != nil {
+		return err
+	}
+
+	return u.UserRepository.UpdatePassword(userID, hashedPassword)
 }

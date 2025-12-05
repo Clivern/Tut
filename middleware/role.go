@@ -7,6 +7,7 @@ package middleware
 
 import (
 	"net/http"
+	"slices"
 
 	"github.com/clivern/tut/service"
 
@@ -19,6 +20,7 @@ func RequireRole(allowedRoles ...string) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Get user from context
 			user, ok := GetUserFromContext(r.Context())
+
 			if !ok || user == nil {
 				log.Info().Str("path", r.URL.Path).Msg("User not found in context for role check")
 				service.WriteJSON(w, http.StatusUnauthorized, map[string]interface{}{
@@ -40,15 +42,7 @@ func RequireRole(allowedRoles ...string) func(http.Handler) http.Handler {
 			}
 
 			// Check if user has one of the allowed roles
-			hasRole := false
-			for _, role := range allowedRoles {
-				if user.Role == role {
-					hasRole = true
-					break
-				}
-			}
-
-			if !hasRole {
+			if !slices.Contains(allowedRoles, user.Role) {
 				log.Info().
 					Str("path", r.URL.Path).
 					Int64("userID", user.ID).

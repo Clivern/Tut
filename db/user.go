@@ -19,6 +19,7 @@ const (
 // User represents a user in the database.
 type User struct {
 	ID          int64
+	Name        string
 	Email       string
 	Password    string
 	Role        string
@@ -42,8 +43,9 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 // Create inserts a new user into the database.
 func (r *UserRepository) Create(user *User) error {
 	result, err := r.db.Exec(
-		`INSERT INTO users (email, password, role, api_key, is_active, last_login_at)
-		VALUES (?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO users (name, email, password, role, api_key, is_active, last_login_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		user.Name,
 		user.Email,
 		user.Password,
 		user.Role,
@@ -63,12 +65,13 @@ func (r *UserRepository) Create(user *User) error {
 func (r *UserRepository) GetByID(id int64) (*User, error) {
 	user := &User{}
 	err := r.db.QueryRow(
-		`SELECT id, email, password, role, api_key, is_active, last_login_at, created_at, updated_at
+		`SELECT id, name, email, password, role, api_key, is_active, last_login_at, created_at, updated_at
 		FROM users
 		WHERE id = ?`,
 		id,
 	).Scan(
 		&user.ID,
+		&user.Name,
 		&user.Email,
 		&user.Password,
 		&user.Role,
@@ -93,12 +96,13 @@ func (r *UserRepository) GetByID(id int64) (*User, error) {
 func (r *UserRepository) GetByEmail(email string) (*User, error) {
 	user := &User{}
 	err := r.db.QueryRow(
-		`SELECT id, email, password, role, api_key, is_active, last_login_at, created_at, updated_at
+		`SELECT id, name, email, password, role, api_key, is_active, last_login_at, created_at, updated_at
 		FROM users
 		WHERE email = ?`,
 		email,
 	).Scan(
 		&user.ID,
+		&user.Name,
 		&user.Email,
 		&user.Password,
 		&user.Role,
@@ -123,12 +127,13 @@ func (r *UserRepository) GetByEmail(email string) (*User, error) {
 func (r *UserRepository) GetByAPIKey(apiKey string) (*User, error) {
 	user := &User{}
 	err := r.db.QueryRow(
-		`SELECT id, email, password, role, api_key, is_active, last_login_at, created_at, updated_at
+		`SELECT id, name, email, password, role, api_key, is_active, last_login_at, created_at, updated_at
 		FROM users
 		WHERE api_key = ?`,
 		apiKey,
 	).Scan(
 		&user.ID,
+		&user.Name,
 		&user.Email,
 		&user.Password,
 		&user.Role,
@@ -153,9 +158,10 @@ func (r *UserRepository) GetByAPIKey(apiKey string) (*User, error) {
 func (r *UserRepository) Update(user *User) error {
 	_, err := r.db.Exec(
 		`UPDATE users SET
-			email = ?, password = ?, role = ?, api_key = ?, is_active = ?,
+			name = ?, email = ?, password = ?, role = ?, api_key = ?, is_active = ?,
 			last_login_at = ?, updated_at = ?
 		WHERE id = ?`,
+		user.Name,
 		user.Email,
 		user.Password,
 		user.Role,
@@ -182,6 +188,32 @@ func (r *UserRepository) UpdateLastLogin(id int64) error {
 	return err
 }
 
+// UpdatePassword updates a user's password.
+func (r *UserRepository) UpdatePassword(id int64, password string) error {
+	_, err := r.db.Exec(
+		`UPDATE users SET
+			password = ?, updated_at = ?
+		WHERE id = ?`,
+		password,
+		time.Now().UTC(),
+		id,
+	)
+	return err
+}
+
+// UpdateAPIKey updates a user's API key.
+func (r *UserRepository) UpdateAPIKey(id int64, apiKey string) error {
+	_, err := r.db.Exec(
+		`UPDATE users SET
+			api_key = ?, updated_at = ?
+		WHERE id = ?`,
+		apiKey,
+		time.Now().UTC(),
+		id,
+	)
+	return err
+}
+
 // Delete removes a user from the database.
 func (r *UserRepository) Delete(id int64) error {
 	_, err := r.db.Exec("DELETE FROM users WHERE id = ?", id)
@@ -191,7 +223,7 @@ func (r *UserRepository) Delete(id int64) error {
 // List retrieves all users with pagination.
 func (r *UserRepository) List(limit, offset int) ([]*User, error) {
 	rows, err := r.db.Query(
-		`SELECT id, email, password, role, api_key, is_active, last_login_at, created_at, updated_at
+		`SELECT id, name, email, password, role, api_key, is_active, last_login_at, created_at, updated_at
 		FROM users
 		ORDER BY created_at DESC
 		LIMIT ? OFFSET ?`,
@@ -208,6 +240,7 @@ func (r *UserRepository) List(limit, offset int) ([]*User, error) {
 		user := &User{}
 		if err := rows.Scan(
 			&user.ID,
+			&user.Name,
 			&user.Email,
 			&user.Password,
 			&user.Role,
@@ -229,6 +262,55 @@ func (r *UserRepository) List(limit, offset int) ([]*User, error) {
 func (r *UserRepository) Count() (int64, error) {
 	var count int64
 	err := r.db.QueryRow("SELECT COUNT(*) FROM users").Scan(&count)
+	return count, err
+}
+
+// SearchByEmail searches for users by email with partial matching.
+func (r *UserRepository) SearchByEmail(emailQuery string, limit, offset int) ([]*User, error) {
+	searchPattern := "%" + emailQuery + "%"
+	rows, err := r.db.Query(
+		`SELECT id, name, email, password, role, api_key, is_active, last_login_at, created_at, updated_at
+		FROM users
+		WHERE email LIKE ?
+		ORDER BY created_at DESC
+		LIMIT ? OFFSET ?`,
+		searchPattern,
+		limit,
+		offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []*User
+	for rows.Next() {
+		user := &User{}
+		if err := rows.Scan(
+			&user.ID,
+			&user.Name,
+			&user.Email,
+			&user.Password,
+			&user.Role,
+			&user.APIKey,
+			&user.IsActive,
+			&user.LastLoginAt,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	return users, rows.Err()
+}
+
+// CountByEmail returns the total number of users matching the email query.
+func (r *UserRepository) CountByEmail(emailQuery string) (int64, error) {
+	searchPattern := "%" + emailQuery + "%"
+	var count int64
+	err := r.db.QueryRow("SELECT COUNT(*) FROM users WHERE email LIKE ?", searchPattern).Scan(&count)
 	return count, err
 }
 

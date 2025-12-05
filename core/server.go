@@ -59,9 +59,12 @@ func Setup(Static embed.FS) http.Handler {
 	r.Group(func(r chi.Router) {
 		r.Get("/api/v1/action/profile", api.GetProfileAction)
 		r.Put("/api/v1/action/profile", api.UpdateProfileAction)
+		r.Get("/api/v1/action/profile/api-key", api.GetAPIKeyAction)
+		r.Post("/api/v1/action/profile/api-key/rotate", api.RotateAPIKeyAction)
+		r.Post("/api/v1/action/profile/password", api.UpdatePasswordAction)
 	})
 	r.Group(func(r chi.Router) {
-		r.Use(middleware.RequireRole(db.UserRoleUser))
+		r.Use(middleware.RequireRole(db.UserRoleAdmin))
 		r.Put("/api/v1/action/settings", api.UpdateSettingsAction)
 		r.Get("/api/v1/action/settings", api.GetSettingsAction)
 	})
@@ -73,6 +76,24 @@ func Setup(Static embed.FS) http.Handler {
 		r.Get("/api/v1/users/{id}", api.GetUserAction)
 		r.Put("/api/v1/users/{id}", api.UpdateUserAction)
 		r.Delete("/api/v1/users/{id}", api.DeleteUserAction)
+	})
+	// Buckets routes
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.RequireRole(db.UserRoleAdmin, db.UserRoleUser))
+		r.Post("/api/v1/buckets", api.CreateBucketAction)
+		r.Get("/api/v1/buckets", api.ListBucketsAction)
+		r.Get("/api/v1/buckets/{id}", api.GetBucketAction)
+		r.Put("/api/v1/buckets/{id}", api.UpdateBucketAction)
+		r.Delete("/api/v1/buckets/{id}", api.DeleteBucketAction)
+	})
+	// Bucket access routes
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.RequireRole(db.UserRoleAdmin, db.UserRoleUser))
+		r.Post("/api/v1/buckets/{bucketId}/access", api.CreateBucketAccessAction)
+		r.Get("/api/v1/buckets/{bucketId}/access", api.ListBucketAccessAction)
+		r.Get("/api/v1/buckets/{bucketId}/access/{userId}", api.GetBucketAccessAction)
+		r.Put("/api/v1/buckets/{bucketId}/access/{userId}", api.UpdateBucketAccessAction)
+		r.Delete("/api/v1/buckets/{bucketId}/access/{userId}", api.DeleteBucketAccessAction)
 	})
 	// Metrics routes
 	r.With(middleware.BasicAuth(

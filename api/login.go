@@ -77,14 +77,17 @@ func LoginAction(w http.ResponseWriter, r *http.Request) {
 	} else {
 		cookieOptions.MaxAge = 0
 	}
+	gravatar := &service.Gravatar{}
 
 	service.SetCookie(w, "_tut_session", session.Token, cookieOptions)
 	service.WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"successMessage": "Login successful",
 		"user": map[string]interface{}{
 			"id":          user.ID,
+			"name":        user.Name,
 			"email":       user.Email,
 			"role":        user.Role,
+			"avatar":      gravatar.GetGravatar(user.Email, 200),
 			"isActive":    user.IsActive,
 			"lastLoginAt": user.LastLoginAt.UTC().Format(time.RFC3339),
 			"createdAt":   user.CreatedAt.UTC().Format(time.RFC3339),

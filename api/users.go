@@ -20,6 +20,7 @@ import (
 
 // CreateUserRequest represents the create user request payload
 type CreateUserRequest struct {
+	Name     string `json:"name" validate:"omitempty,min=1,max=100" label:"Name"`
 	Email    string `json:"email" validate:"required,email,min=4,max=60" label:"Email"`
 	Password string `json:"password" validate:"required,strong_password,min=8,max=60" label:"Password"`
 	Role     string `json:"role" validate:"required,oneof=admin user readonly" label:"Role"`
@@ -28,6 +29,7 @@ type CreateUserRequest struct {
 
 // UpdateUserRequest represents the update user request payload
 type UpdateUserRequest struct {
+	Name     string `json:"name" validate:"omitempty,min=1,max=100" label:"Name"`
 	Email    string `json:"email" validate:"required,email,min=4,max=60" label:"Email"`
 	Password string `json:"password" validate:"omitempty,strong_password,min=8,max=60" label:"Password"`
 	Role     string `json:"role" validate:"required,oneof=admin user readonly" label:"Role"`
@@ -46,6 +48,7 @@ func CreateUserAction(w http.ResponseWriter, r *http.Request) {
 
 	userModule := module.NewUser(db.NewUserRepository(db.GetDB()))
 	user, err := userModule.CreateUser(&module.CreateUserOptions{
+		Name:     req.Name,
 		Email:    req.Email,
 		Password: req.Password,
 		Role:     req.Role,
@@ -66,13 +69,17 @@ func CreateUserAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	gravatar := &service.Gravatar{}
+
 	log.Info().Int64("userID", user.ID).Msg("User created successfully")
 	service.WriteJSON(w, http.StatusCreated, map[string]interface{}{
 		"id":          user.ID,
+		"name":        user.Name,
 		"email":       user.Email,
 		"role":        user.Role,
 		"isActive":    user.IsActive,
 		"apiKey":      user.APIKey,
+		"avatar":      gravatar.GetGravatar(user.Email, 200),
 		"lastLoginAt": user.LastLoginAt.UTC().Format(time.RFC3339),
 		"createdAt":   user.CreatedAt.UTC().Format(time.RFC3339),
 		"updatedAt":   user.UpdatedAt.UTC().Format(time.RFC3339),
@@ -107,13 +114,16 @@ func GetUserAction(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+	gravatar := &service.Gravatar{}
 
 	service.WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"id":          user.ID,
+		"name":        user.Name,
 		"email":       user.Email,
 		"role":        user.Role,
 		"isActive":    user.IsActive,
 		"apiKey":      user.APIKey,
+		"avatar":      gravatar.GetGravatar(user.Email, 200),
 		"lastLoginAt": user.LastLoginAt.UTC().Format(time.RFC3339),
 		"createdAt":   user.CreatedAt.UTC().Format(time.RFC3339),
 		"updatedAt":   user.UpdatedAt.UTC().Format(time.RFC3339),
@@ -143,6 +153,7 @@ func UpdateUserAction(w http.ResponseWriter, r *http.Request) {
 	userModule := module.NewUser(db.NewUserRepository(db.GetDB()))
 	user, err := userModule.UpdateUser(&module.UpdateUserOptions{
 		UserID:   userID,
+		Name:     req.Name,
 		Email:    req.Email,
 		Password: req.Password,
 		Role:     req.Role,
@@ -168,14 +179,17 @@ func UpdateUserAction(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+	gravatar := &service.Gravatar{}
 
 	log.Info().Int64("userID", user.ID).Msg("User updated successfully")
 	service.WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"id":          user.ID,
+		"name":        user.Name,
 		"email":       user.Email,
 		"role":        user.Role,
 		"isActive":    user.IsActive,
 		"apiKey":      user.APIKey,
+		"avatar":      gravatar.GetGravatar(user.Email, 200),
 		"lastLoginAt": user.LastLoginAt.UTC().Format(time.RFC3339),
 		"createdAt":   user.CreatedAt.UTC().Format(time.RFC3339),
 		"updatedAt":   user.UpdatedAt.UTC().Format(time.RFC3339),
@@ -183,11 +197,13 @@ func UpdateUserAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListUsersAction handles user listing requests with pagination
+// Supports optional email search query parameter for filtering by email address
 func ListUsersAction(w http.ResponseWriter, r *http.Request) {
 	log.Debug().Msg("List users endpoint called")
 
 	limitStr := r.URL.Query().Get("limit")
 	offsetStr := r.URL.Query().Get("offset")
+	emailQuery := r.URL.Query().Get("email")
 
 	limit := 50
 	offset := 0
@@ -206,8 +222,9 @@ func ListUsersAction(w http.ResponseWriter, r *http.Request) {
 
 	userModule := module.NewUser(db.NewUserRepository(db.GetDB()))
 	result, err := userModule.ListUsers(&module.ListUsersOptions{
-		Limit:  limit,
-		Offset: offset,
+		Limit:      limit,
+		Offset:     offset,
+		EmailQuery: emailQuery,
 	})
 
 	if err != nil {
@@ -218,14 +235,17 @@ func ListUsersAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	gravatar := &service.Gravatar{}
 	userList := make([]map[string]interface{}, 0, len(result.Users))
 	for _, user := range result.Users {
 		userList = append(userList, map[string]interface{}{
 			"id":          user.ID,
+			"name":        user.Name,
 			"email":       user.Email,
 			"role":        user.Role,
 			"isActive":    user.IsActive,
 			"apiKey":      user.APIKey,
+			"avatar":      gravatar.GetGravatar(user.Email, 200),
 			"lastLoginAt": user.LastLoginAt.UTC().Format(time.RFC3339),
 			"createdAt":   user.CreatedAt.UTC().Format(time.RFC3339),
 			"updatedAt":   user.UpdatedAt.UTC().Format(time.RFC3339),

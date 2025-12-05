@@ -54,6 +54,10 @@ export const authAPI = {
   login: (data) => api.post('public/action/login', data),
   logout: () => api.post('public/action/logout'),
   getProfile: () => api.get('/action/profile'),
+  updateProfile: (data) => api.put('/action/profile', data),
+  updatePassword: (data) => api.post('/action/profile/password', data),
+  getAPIKey: () => api.get('/action/profile/api-key'),
+  rotateAPIKey: () => api.post('/action/profile/api-key/rotate'),
 }
 
 export const setupAPI = {
@@ -61,15 +65,40 @@ export const setupAPI = {
   checkInstalled: () => api.get('public/action/setup/status'),
 }
 
-export const settingsAPI = {
-  get: () => api.get('/action/settings'),
-  update: (data) => api.put('/action/settings', data),
-}
-
-// API endpoints for users C
+// API endpoints for users
 export const userAPI = {
-  getUsers: () => api.get('/users'),
+  getUsers: (params = {}) => api.get('/users', { params }),
+  getUser: (id) => api.get(`/users/${id}`),
   createUser: (data) => api.post('/users', data),
   updateUser: (id, data) => api.put(`/users/${id}`, data),
   deleteUser: (id) => api.delete(`/users/${id}`),
 }
+
+// API endpoints for settings
+export const settingsAPI = {
+  getSettings: () => api.get('/action/settings'),
+  updateSettings: (data) => api.put('/action/settings', data),
+}
+
+// API endpoints for buckets
+export const bucketAPI = {
+  getBuckets: (params = {}) => api.get('/buckets', { params }),
+  getBucket: (id) => api.get(`/buckets/${id}`),
+  createBucket: (data) => api.post('/buckets', data),
+  deleteBucket: (id) => api.delete(`/buckets/${id}`),
+  listBucketItems: (bucketName, params = {}) => api.get(`/buckets/${encodeURIComponent(bucketName)}/items`, { params }),
+  uploadFile: (bucketName, path, formData) => api.post(`/buckets/${encodeURIComponent(bucketName)}/items`, formData, {
+    params: { path: encodeURIComponent(path) },
+  }),
+  downloadFile: (bucketName, path) => api.get(`/buckets/${encodeURIComponent(bucketName)}/items`, {
+    params: { path: encodeURIComponent(path) },
+    responseType: 'blob',
+  }),
+  createFolder: (bucketName, path) => api.post(`/buckets/${encodeURIComponent(bucketName)}/folders`, null, {
+    params: { path: encodeURIComponent(path) },
+  }),
+  deleteItem: (bucketName, path, type = 'file') => api.delete(`/buckets/${encodeURIComponent(bucketName)}/items`, {
+    params: { path: encodeURIComponent(path), type },
+  }),
+}
+

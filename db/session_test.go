@@ -21,6 +21,7 @@ func setupSessionTestDB(t *testing.T) *sql.DB {
 	_, err = db.Exec(`
 		CREATE TABLE users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name VARCHAR(255),
 			email VARCHAR(255) NOT NULL UNIQUE,
 			password VARCHAR(255) NOT NULL,
 			role VARCHAR(50) NOT NULL DEFAULT 'user',

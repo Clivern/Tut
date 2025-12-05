@@ -4,18 +4,48 @@
 
     <!-- Main Content -->
     <main class="w-full py-8 px-6 lg:px-8">
+      <!-- Breadcrumb Navigation -->
+      <div class="mb-4">
+        <nav class="flex items-center space-x-2 text-sm">
+          <router-link
+            to="/admin/buckets"
+            class="text-blue-600 hover:text-blue-900"
+          >
+            Buckets
+          </router-link>
+          <svg class="h-4 w-4 text-notion-textLight" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+          <span class="text-notion-text">{{ bucketName }}</span>
+          <template v-if="currentPath">
+            <svg class="h-4 w-4 text-notion-textLight" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            <span class="text-notion-text">{{ currentPath }}</span>
+          </template>
+        </nav>
+      </div>
+
       <!-- Page Header -->
       <div class="mb-8 flex justify-between items-center">
         <div>
-          <h1 class="text-3xl font-semibold text-notion-text">Users</h1>
-          <p class="text-notion-textLight mt-2">Manage user accounts and permissions</p>
+          <h1 class="text-3xl font-semibold text-notion-text">{{ bucketName }}</h1>
+          <p class="text-notion-textLight mt-2">Browse directories and files</p>
         </div>
-        <button
-          @click="openCreateModal"
-          class="btn-primary"
-        >
-          Add User
-        </button>
+        <div class="flex items-center space-x-3">
+          <button
+            @click="openUploadModal"
+            class="btn-primary"
+          >
+            Upload File
+          </button>
+          <button
+            @click="openCreateFolderModal"
+            class="btn-secondary"
+          >
+            Create Folder
+          </button>
+        </div>
       </div>
 
       <!-- Success/Error Messages -->
@@ -26,18 +56,18 @@
         <p class="text-sm text-red-800">{{ errorMessage }}</p>
       </div>
 
-      <!-- Users Table -->
+      <!-- Files and Directories Table -->
       <div class="bg-white rounded-lg border border-notion-border overflow-hidden">
         <div v-if="loading" class="p-8 text-center">
           <svg class="animate-spin h-6 w-6 mx-auto text-notion-text" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
           </svg>
-          <p class="text-notion-textLight mt-2">Loading users...</p>
+          <p class="text-notion-textLight mt-2">Loading...</p>
         </div>
 
-        <div v-else-if="users.length === 0" class="p-8 text-center">
-          <p class="text-notion-textLight">No users found</p>
+        <div v-else-if="items.length === 0" class="p-8 text-center">
+          <p class="text-notion-textLight">This directory is empty</p>
         </div>
 
         <table v-else class="min-w-full divide-y divide-notion-border">
@@ -47,19 +77,10 @@
                 Name
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-notion-textLight uppercase tracking-wider">
-                Email
+                Size
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-notion-textLight uppercase tracking-wider">
-                Role
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-notion-textLight uppercase tracking-wider">
-                Status
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-notion-textLight uppercase tracking-wider">
-                Last Login
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-notion-textLight uppercase tracking-wider">
-                Created
+                Modified
               </th>
               <th class="px-6 py-3 text-right text-xs font-medium text-notion-textLight uppercase tracking-wider">
                 Actions
@@ -67,47 +88,61 @@
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-notion-border">
-            <tr v-for="user in users" :key="user.id" class="hover:bg-notion-hover">
+            <!-- Directories first -->
+            <tr v-for="item in directories" :key="item.name" class="hover:bg-notion-hover">
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-notion-text">{{ user.name || 'N/A' }}</div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-notion-text">{{ user.email }}</div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 py-1 text-xs font-medium rounded-full"
-                  :class="{
-                    'bg-purple-100 text-purple-800': user.role === 'admin',
-                    'bg-blue-100 text-blue-800': user.role === 'user',
-                    'bg-gray-100 text-gray-800': user.role === 'readonly'
-                  }">
-                  {{ user.role }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 py-1 text-xs font-medium rounded-full"
-                  :class="{
-                    'bg-green-100 text-green-800': user.isActive,
-                    'bg-red-100 text-red-800': !user.isActive
-                  }">
-                  {{ user.isActive ? 'Active' : 'Inactive' }}
-                </span>
+                <div class="flex items-center">
+                  <svg class="h-5 w-5 text-yellow-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                  </svg>
+                  <button
+                    @click="navigateToPath(item.name)"
+                    class="text-sm font-medium text-blue-600 hover:text-blue-900"
+                  >
+                    {{ item.name }}
+                  </button>
+                </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-notion-textLight">
-                {{ formatDate(user.lastLoginAt) }}
+                —
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-notion-textLight">
-                {{ formatDate(user.createdAt) }}
+                {{ formatDate(item.modifiedAt) }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <button
-                  @click="openEditModal(user)"
+                  @click="openDeleteModal(item, 'directory')"
+                  class="text-red-600 hover:text-red-900"
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+            <!-- Files -->
+            <tr v-for="item in files" :key="item.name" class="hover:bg-notion-hover">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <svg class="h-5 w-5 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span class="text-sm font-medium text-notion-text">{{ item.name }}</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-notion-textLight">
+                {{ formatSize(item.size) }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-notion-textLight">
+                {{ formatDate(item.modifiedAt) }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button
+                  @click="downloadFile(item.name)"
                   class="text-blue-600 hover:text-blue-900 mr-4"
                 >
-                  Edit
+                  Download
                 </button>
                 <button
-                  @click="openDeleteModal(user)"
+                  @click="openDeleteModal(item, 'file')"
                   class="text-red-600 hover:text-red-900"
                 >
                   Delete
@@ -120,7 +155,7 @@
         <!-- Pagination -->
         <div v-if="total > 0" class="bg-white px-6 py-4 border-t border-notion-border flex items-center justify-between">
           <div class="text-sm text-notion-textLight">
-            Showing {{ offset + 1 }} to {{ Math.min(offset + limit, total) }} of {{ total }} users
+            Showing {{ offset + 1 }} to {{ Math.min(offset + limit, total) }} of {{ total }} items
           </div>
           <div class="flex items-center space-x-2">
             <button
@@ -142,18 +177,18 @@
       </div>
     </main>
 
-    <!-- Create User Modal -->
-    <div v-if="showCreateModal" class="fixed inset-0 z-50 overflow-y-auto" @click.self="closeCreateModal">
+    <!-- Upload File Modal -->
+    <div v-if="showUploadModal" class="fixed inset-0 z-50 overflow-y-auto" @click.self="closeUploadModal">
       <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="closeCreateModal"></div>
+        <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="closeUploadModal"></div>
         <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-          <form @submit.prevent="handleCreate">
+          <form @submit.prevent="handleUpload">
             <div class="bg-white px-6 pt-6 pb-4">
               <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-notion-text">Create User</h3>
+                <h3 class="text-lg font-semibold text-notion-text">Upload File</h3>
                 <button
                   type="button"
-                  @click="closeCreateModal"
+                  @click="closeUploadModal"
                   class="text-notion-textLight hover:text-notion-text"
                 >
                   <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -163,76 +198,27 @@
               </div>
               <div class="space-y-4">
                 <div>
-                  <label for="create-name" class="block text-sm font-medium text-notion-text mb-2">
-                    Name
+                  <label for="upload-file" class="block text-sm font-medium text-notion-text mb-2">
+                    Select File *
                   </label>
                   <input
-                    id="create-name"
-                    v-model="createForm.name"
-                    type="text"
-                    class="input-field"
-                    placeholder="User name"
-                  />
-                </div>
-                <div>
-                  <label for="create-email" class="block text-sm font-medium text-notion-text mb-2">
-                    Email *
-                  </label>
-                  <input
-                    id="create-email"
-                    v-model="createForm.email"
-                    type="email"
+                    id="upload-file"
+                    ref="fileInput"
+                    type="file"
                     required
                     class="input-field"
-                    placeholder="user@example.com"
+                    @change="handleFileSelect"
                   />
                 </div>
-                <div>
-                  <label for="create-password" class="block text-sm font-medium text-notion-text mb-2">
-                    Password *
-                  </label>
-                  <input
-                    id="create-password"
-                    v-model="createForm.password"
-                    type="password"
-                    required
-                    class="input-field"
-                    placeholder="Minimum 8 characters"
-                  />
-                </div>
-                <div>
-                  <label for="create-role" class="block text-sm font-medium text-notion-text mb-2">
-                    Role *
-                  </label>
-                  <select
-                    id="create-role"
-                    v-model="createForm.role"
-                    required
-                    class="input-field"
-                  >
-                    <option value="admin">Admin</option>
-                    <option value="user">User</option>
-                    <option value="readonly">Readonly</option>
-                  </select>
-                </div>
-                <div class="flex items-start">
-                  <input
-                    id="create-isActive"
-                    v-model="createForm.isActive"
-                    type="checkbox"
-                    class="h-4 w-4 mt-1 rounded text-notion-text focus:ring-notion-text border-notion-border"
-                  />
-                  <label for="create-isActive" class="ml-3 block">
-                    <span class="text-sm font-medium text-notion-text">Active</span>
-                    <p class="text-xs text-notion-textLight mt-1">User account is active and can log in</p>
-                  </label>
+                <div v-if="uploadForm.fileName">
+                  <p class="text-sm text-notion-textLight">Selected: {{ uploadForm.fileName }}</p>
                 </div>
               </div>
             </div>
             <div class="bg-notion-hover px-6 py-4 flex justify-end space-x-3">
               <button
                 type="button"
-                @click="closeCreateModal"
+                @click="closeUploadModal"
                 class="btn-secondary"
               >
                 Cancel
@@ -240,15 +226,15 @@
               <button
                 type="submit"
                 class="btn-primary"
-                :disabled="createLoading"
+                :disabled="uploadLoading || !uploadForm.file"
               >
-                <span v-if="!createLoading">Create</span>
+                <span v-if="!uploadLoading">Upload</span>
                 <span v-else class="flex items-center">
                   <svg class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  Creating...
+                  Uploading...
                 </span>
               </button>
             </div>
@@ -257,18 +243,18 @@
       </div>
     </div>
 
-    <!-- Edit User Modal -->
-    <div v-if="showEditModal" class="fixed inset-0 z-50 overflow-y-auto" @click.self="closeEditModal">
+    <!-- Create Folder Modal -->
+    <div v-if="showCreateFolderModal" class="fixed inset-0 z-50 overflow-y-auto" @click.self="closeCreateFolderModal">
       <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="closeEditModal"></div>
+        <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="closeCreateFolderModal"></div>
         <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-          <form @submit.prevent="handleUpdate">
+          <form @submit.prevent="handleCreateFolder">
             <div class="bg-white px-6 pt-6 pb-4">
               <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-notion-text">Edit User</h3>
+                <h3 class="text-lg font-semibold text-notion-text">Create Folder</h3>
                 <button
                   type="button"
-                  @click="closeEditModal"
+                  @click="closeCreateFolderModal"
                   class="text-notion-textLight hover:text-notion-text"
                 >
                   <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -278,76 +264,24 @@
               </div>
               <div class="space-y-4">
                 <div>
-                  <label for="edit-name" class="block text-sm font-medium text-notion-text mb-2">
-                    Name
+                  <label for="folder-name" class="block text-sm font-medium text-notion-text mb-2">
+                    Folder Name *
                   </label>
                   <input
-                    id="edit-name"
-                    v-model="editForm.name"
+                    id="folder-name"
+                    v-model="folderForm.name"
                     type="text"
-                    class="input-field"
-                    placeholder="User name"
-                  />
-                </div>
-                <div>
-                  <label for="edit-email" class="block text-sm font-medium text-notion-text mb-2">
-                    Email *
-                  </label>
-                  <input
-                    id="edit-email"
-                    v-model="editForm.email"
-                    type="email"
                     required
                     class="input-field"
-                    placeholder="user@example.com"
+                    placeholder="my-folder"
                   />
-                </div>
-                <div>
-                  <label for="edit-password" class="block text-sm font-medium text-notion-text mb-2">
-                    Password
-                  </label>
-                  <input
-                    id="edit-password"
-                    v-model="editForm.password"
-                    type="password"
-                    class="input-field"
-                    placeholder="Leave empty to keep current password"
-                  />
-                  <p class="text-xs text-notion-textLight mt-1">Leave empty to keep current password</p>
-                </div>
-                <div>
-                  <label for="edit-role" class="block text-sm font-medium text-notion-text mb-2">
-                    Role *
-                  </label>
-                  <select
-                    id="edit-role"
-                    v-model="editForm.role"
-                    required
-                    class="input-field"
-                  >
-                    <option value="admin">Admin</option>
-                    <option value="user">User</option>
-                    <option value="readonly">Readonly</option>
-                  </select>
-                </div>
-                <div class="flex items-start">
-                  <input
-                    id="edit-isActive"
-                    v-model="editForm.isActive"
-                    type="checkbox"
-                    class="h-4 w-4 mt-1 rounded text-notion-text focus:ring-notion-text border-notion-border"
-                  />
-                  <label for="edit-isActive" class="ml-3 block">
-                    <span class="text-sm font-medium text-notion-text">Active</span>
-                    <p class="text-xs text-notion-textLight mt-1">User account is active and can log in</p>
-                  </label>
                 </div>
               </div>
             </div>
             <div class="bg-notion-hover px-6 py-4 flex justify-end space-x-3">
               <button
                 type="button"
-                @click="closeEditModal"
+                @click="closeCreateFolderModal"
                 class="btn-secondary"
               >
                 Cancel
@@ -355,15 +289,15 @@
               <button
                 type="submit"
                 class="btn-primary"
-                :disabled="editLoading"
+                :disabled="folderLoading"
               >
-                <span v-if="!editLoading">Update</span>
+                <span v-if="!folderLoading">Create</span>
                 <span v-else class="flex items-center">
                   <svg class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  Updating...
+                  Creating...
                 </span>
               </button>
             </div>
@@ -379,7 +313,7 @@
         <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
           <div class="bg-white px-6 pt-6 pb-4">
             <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-semibold text-notion-text">Delete User</h3>
+              <h3 class="text-lg font-semibold text-notion-text">Delete {{ itemToDeleteType === 'directory' ? 'Folder' : 'File' }}</h3>
               <button
                 type="button"
                 @click="closeDeleteModal"
@@ -391,7 +325,8 @@
               </button>
             </div>
             <p class="text-sm text-notion-textLight">
-              Are you sure you want to delete user <strong class="text-notion-text">{{ userToDelete?.email }}</strong>?
+              Are you sure you want to delete {{ itemToDeleteType === 'directory' ? 'folder' : 'file' }} <strong class="text-notion-text">{{ itemToDelete?.name }}</strong>?
+              {{ itemToDeleteType === 'directory' ? 'This will delete all contents inside the folder.' : '' }}
               This action cannot be undone.
             </p>
           </div>
@@ -425,18 +360,26 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { userAPI } from '@/api'
+import { bucketAPI } from '@/api'
 import NavBar from '@/components/NavBar.vue'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
+
+// Get bucket name from route params
+const bucketName = computed(() => decodeURIComponent(route.params.bucketName || ''))
+const currentPath = computed(() => {
+  const path = route.query.path || ''
+  return path ? decodeURIComponent(path) : ''
+})
 
 // State
 const loading = ref(false)
-const users = ref([])
+const items = ref([])
 const total = ref(0)
 const limit = ref(50)
 const offset = ref(0)
@@ -444,41 +387,42 @@ const successMessage = ref(null)
 const errorMessage = ref(null)
 
 // Modal states
-const showCreateModal = ref(false)
-const showEditModal = ref(false)
+const showUploadModal = ref(false)
+const showCreateFolderModal = ref(false)
 const showDeleteModal = ref(false)
-const createLoading = ref(false)
-const editLoading = ref(false)
+const uploadLoading = ref(false)
+const folderLoading = ref(false)
 const deleteLoading = ref(false)
-const userToDelete = ref(null)
+const itemToDelete = ref(null)
+const itemToDeleteType = ref('file')
+const fileInput = ref(null)
 
 // Forms
-const createForm = reactive({
-  name: '',
-  email: '',
-  password: '',
-  role: 'user',
-  isActive: true
+const uploadForm = reactive({
+  file: null,
+  fileName: ''
 })
 
-const editForm = reactive({
-  id: null,
-  name: '',
-  email: '',
-  password: '',
-  role: 'user',
-  isActive: true
+const folderForm = reactive({
+  name: ''
+})
+
+// Computed properties
+const directories = computed(() => {
+  return items.value.filter(item => item.type === 'directory' || item.isDirectory)
+})
+
+const files = computed(() => {
+  return items.value.filter(item => item.type === 'file' || !item.isDirectory)
 })
 
 
 const formatDate = (dateString) => {
-  if (!dateString) return 'Never'
+  if (!dateString) return 'N/A'
   try {
     const date = new Date(dateString)
-
-    // Check if date is invalid or represents a zero time (year 1 or before Unix epoch)
     if (isNaN(date.getTime()) || date.getFullYear() < 1970) {
-      return 'Never'
+      return 'N/A'
     }
 
     const now = new Date()
@@ -487,13 +431,11 @@ const formatDate = (dateString) => {
     const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)
 
-    // Relative time for recent dates
     if (diffMins < 1) return 'Just now'
     if (diffMins < 60) return `${diffMins} ${diffMins === 1 ? 'minute' : 'minutes'} ago`
     if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`
     if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`
 
-    // For older dates, show formatted date
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     const month = months[date.getMonth()]
     const day = date.getDate()
@@ -506,27 +448,40 @@ const formatDate = (dateString) => {
       return `${month} ${day}, ${year}`
     }
   } catch {
-    return 'Never'
+    return 'N/A'
   }
 }
 
-const loadUsers = async () => {
+const formatSize = (bytes) => {
+  if (!bytes || bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+}
+
+const loadItems = async () => {
   loading.value = true
   errorMessage.value = null
 
   try {
-    const response = await userAPI.getUsers({
+    const params = {
       limit: limit.value,
       offset: offset.value
-    })
+    }
+    if (currentPath.value) {
+      params.path = currentPath.value
+    }
+
+    const response = await bucketAPI.listBucketItems(bucketName.value, params)
 
     if (response.data) {
-      users.value = response.data.users || []
+      items.value = response.data.items || []
       total.value = response.data._meta?.total || 0
     }
   } catch (err) {
-    console.error('Failed to load users:', err)
-    errorMessage.value = err.response?.data?.errorMessage || 'Failed to load users'
+    console.error('Failed to load items:', err)
+    errorMessage.value = err.response?.data?.errorMessage || 'Failed to load items'
   } finally {
     loading.value = false
   }
@@ -536,167 +491,195 @@ const goToPage = (newOffset) => {
   if (newOffset < 0) return
   if (newOffset >= total.value) return
   offset.value = newOffset
-  loadUsers()
+  loadItems()
 }
 
-const openCreateModal = () => {
-  createForm.name = ''
-  createForm.email = ''
-  createForm.password = ''
-  createForm.role = 'user'
-  createForm.isActive = true
-  showCreateModal.value = true
+const navigateToPath = (pathName) => {
+  const newPath = currentPath.value
+    ? `${currentPath.value}/${pathName}`
+    : pathName
+  router.push({
+    name: 'BucketFiles',
+    params: { bucketName: bucketName.value },
+    query: { path: encodeURIComponent(newPath) }
+  })
 }
 
-const closeCreateModal = () => {
-  showCreateModal.value = false
-  createForm.name = ''
-  createForm.email = ''
-  createForm.password = ''
-  createForm.role = 'user'
-  createForm.isActive = true
+const openUploadModal = () => {
+  uploadForm.file = null
+  uploadForm.fileName = ''
+  showUploadModal.value = true
 }
 
-const handleCreate = async () => {
-  createLoading.value = true
+const closeUploadModal = () => {
+  showUploadModal.value = false
+  uploadForm.file = null
+  uploadForm.fileName = ''
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
+}
+
+const handleFileSelect = (event) => {
+  const file = event.target.files[0]
+  if (file) {
+    uploadForm.file = file
+    uploadForm.fileName = file.name
+  }
+}
+
+const handleUpload = async () => {
+  if (!uploadForm.file) return
+
+  uploadLoading.value = true
   errorMessage.value = null
   successMessage.value = null
 
   try {
-    const response = await userAPI.createUser({
-      name: createForm.name.trim() || undefined,
-      email: createForm.email,
-      password: createForm.password,
-      role: createForm.role,
-      isActive: createForm.isActive
-    })
+    const formData = new FormData()
+    formData.append('file', uploadForm.file)
 
-    if (response.data) {
-      successMessage.value = 'User created successfully'
-      closeCreateModal()
-      loadUsers()
-      setTimeout(() => {
-        successMessage.value = null
-      }, 3000)
-    }
+    const path = currentPath.value ? `${currentPath.value}/${uploadForm.fileName}` : uploadForm.fileName
+
+    await bucketAPI.uploadFile(bucketName.value, path, formData)
+
+    successMessage.value = 'File uploaded successfully'
+    closeUploadModal()
+    loadItems()
+    setTimeout(() => {
+      successMessage.value = null
+    }, 3000)
   } catch (err) {
-    console.error('Failed to create user:', err)
+    console.error('Failed to upload file:', err)
     if (err.response?.data?.errorMessage) {
       errorMessage.value = err.response.data.errorMessage
-    } else if (err.response?.data?.errors) {
-      const errors = err.response.data.errors
-      const errorList = Object.values(errors).flat().join(', ')
-      errorMessage.value = `Validation errors: ${errorList}`
     } else {
-      errorMessage.value = 'Failed to create user. Please try again.'
+      errorMessage.value = 'Failed to upload file. Please try again.'
     }
   } finally {
-    createLoading.value = false
+    uploadLoading.value = false
   }
 }
 
-const openEditModal = (user) => {
-  editForm.id = user.id
-  editForm.name = user.name || ''
-  editForm.email = user.email
-  editForm.password = ''
-  editForm.role = user.role
-  editForm.isActive = user.isActive
-  showEditModal.value = true
+const openCreateFolderModal = () => {
+  folderForm.name = ''
+  showCreateFolderModal.value = true
 }
 
-const closeEditModal = () => {
-  showEditModal.value = false
-  editForm.id = null
-  editForm.name = ''
-  editForm.email = ''
-  editForm.password = ''
-  editForm.role = 'user'
-  editForm.isActive = true
+const closeCreateFolderModal = () => {
+  showCreateFolderModal.value = false
+  folderForm.name = ''
 }
 
-const handleUpdate = async () => {
-  editLoading.value = true
+const handleCreateFolder = async () => {
+  folderLoading.value = true
   errorMessage.value = null
   successMessage.value = null
 
   try {
-    const payload = {
-      name: editForm.name.trim() || undefined,
-      email: editForm.email,
-      role: editForm.role,
-      isActive: editForm.isActive
-    }
+    const path = currentPath.value
+      ? `${currentPath.value}/${folderForm.name}`
+      : folderForm.name
 
-    // Only include password if it's provided
-    if (editForm.password) {
-      payload.password = editForm.password
-    }
+    await bucketAPI.createFolder(bucketName.value, path)
 
-    const response = await userAPI.updateUser(editForm.id, payload)
-
-    if (response.data) {
-      successMessage.value = 'User updated successfully'
-      closeEditModal()
-      loadUsers()
-      setTimeout(() => {
-        successMessage.value = null
-      }, 3000)
-    }
+    successMessage.value = 'Folder created successfully'
+    closeCreateFolderModal()
+    loadItems()
+    setTimeout(() => {
+      successMessage.value = null
+    }, 3000)
   } catch (err) {
-    console.error('Failed to update user:', err)
+    console.error('Failed to create folder:', err)
     if (err.response?.data?.errorMessage) {
       errorMessage.value = err.response.data.errorMessage
-    } else if (err.response?.data?.errors) {
-      const errors = err.response.data.errors
-      const errorList = Object.values(errors).flat().join(', ')
-      errorMessage.value = `Validation errors: ${errorList}`
     } else {
-      errorMessage.value = 'Failed to update user. Please try again.'
+      errorMessage.value = 'Failed to create folder. Please try again.'
     }
   } finally {
-    editLoading.value = false
+    folderLoading.value = false
   }
 }
 
-const openDeleteModal = (user) => {
-  userToDelete.value = user
+const openDeleteModal = (item, type) => {
+  itemToDelete.value = item
+  itemToDeleteType.value = type
   showDeleteModal.value = true
 }
 
 const closeDeleteModal = () => {
   showDeleteModal.value = false
-  userToDelete.value = null
+  itemToDelete.value = null
+  itemToDeleteType.value = 'file'
 }
 
 const handleDelete = async () => {
-  if (!userToDelete.value) return
+  if (!itemToDelete.value) return
 
   deleteLoading.value = true
   errorMessage.value = null
   successMessage.value = null
 
   try {
-    await userAPI.deleteUser(userToDelete.value.id)
-    successMessage.value = 'User deleted successfully'
+    const path = currentPath.value
+      ? `${currentPath.value}/${itemToDelete.value.name}`
+      : itemToDelete.value.name
+
+    await bucketAPI.deleteItem(bucketName.value, path, itemToDeleteType.value)
+
+    successMessage.value = `${itemToDeleteType.value === 'directory' ? 'Folder' : 'File'} deleted successfully`
     closeDeleteModal()
-    loadUsers()
+    loadItems()
     setTimeout(() => {
       successMessage.value = null
     }, 3000)
   } catch (err) {
-    console.error('Failed to delete user:', err)
+    console.error('Failed to delete item:', err)
     if (err.response?.data?.errorMessage) {
       errorMessage.value = err.response.data.errorMessage
     } else {
-      errorMessage.value = 'Failed to delete user. Please try again.'
+      errorMessage.value = `Failed to delete ${itemToDeleteType.value}. Please try again.`
     }
   } finally {
     deleteLoading.value = false
   }
 }
 
+const downloadFile = async (fileName) => {
+  try {
+    const path = currentPath.value
+      ? `${currentPath.value}/${fileName}`
+      : fileName
+
+    const response = await bucketAPI.downloadFile(bucketName.value, path)
+
+    // Create a blob and download it
+    const blob = new Blob([response.data])
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = fileName
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch (err) {
+    console.error('Failed to download file:', err)
+    errorMessage.value = err.response?.data?.errorMessage || 'Failed to download file'
+  }
+}
+
+// Watch for route changes to reload items
+watch(() => route.query.path, () => {
+  loadItems()
+})
+
 onMounted(() => {
-  loadUsers()
+  if (!bucketName.value) {
+    router.push('/admin/buckets')
+    return
+  }
+  loadItems()
 })
 </script>
+

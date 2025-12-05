@@ -29,6 +29,7 @@ func setupUserTestDB(t *testing.T) (*Connection, func()) {
 	_, err = conn.DB.Exec(`
 		CREATE TABLE users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name VARCHAR(255),
 			email VARCHAR(255) NOT NULL UNIQUE,
 			password VARCHAR(255) NOT NULL,
 			role VARCHAR(50) NOT NULL,
