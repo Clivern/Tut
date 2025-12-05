@@ -257,6 +257,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { bucketAPI } from '@/api'
 import NavBar from '@/components/NavBar.vue'
+import { formatDate } from '@/utils/helpers'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -282,42 +283,6 @@ const createForm = reactive({
   name: '',
   region: ''
 })
-
-
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A'
-  try {
-    const date = new Date(dateString)
-    if (isNaN(date.getTime()) || date.getFullYear() < 1970) {
-      return 'N/A'
-    }
-
-    const now = new Date()
-    const diffMs = now - date
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const diffDays = Math.floor(diffMs / 86400000)
-
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins} ${diffMins === 1 ? 'minute' : 'minutes'} ago`
-    if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`
-    if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`
-
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    const month = months[date.getMonth()]
-    const day = date.getDate()
-    const year = date.getFullYear()
-    const isCurrentYear = year === now.getFullYear()
-
-    if (isCurrentYear) {
-      return `${month} ${day}`
-    } else {
-      return `${month} ${day}, ${year}`
-    }
-  } catch {
-    return 'N/A'
-  }
-}
 
 const loadBuckets = async () => {
   loading.value = true
@@ -383,10 +348,6 @@ const handleCreate = async () => {
     console.error('Failed to create bucket:', err)
     if (err.response?.data?.errorMessage) {
       errorMessage.value = err.response.data.errorMessage
-    } else if (err.response?.data?.errors) {
-      const errors = err.response.data.errors
-      const errorList = Object.values(errors).flat().join(', ')
-      errorMessage.value = `Validation errors: ${errorList}`
     } else {
       errorMessage.value = 'Failed to create bucket. Please try again.'
     }
