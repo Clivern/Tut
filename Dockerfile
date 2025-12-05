@@ -1,4 +1,4 @@
-FROM golang:1.24.9
+FROM golang:1.25.5
 
 ARG TUT_VERSION=0.1.0
 
